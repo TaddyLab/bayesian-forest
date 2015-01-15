@@ -1,1 +1,3 @@
-# bayesian-forest
+# Bayesian Forest
+
+We interpret random forests, and bagging ensemble estimators in general, via the framework of  nonparametric Bayesian (npB) analysis.  The ensemble strategies are revealed as approximations to posterior mean inference for complex summaries of the population data generating process.  This insight motivates a class of fully Bayesian forest algorithms that provide gains in interpretability (from a Bayesian perspective) and predictive performance  over their classically bagged predecessors.  The npB framework is then used to reinterpret common distributed algorithms for efficient forest estimation on Big Data.  From this, we propose a novel blocking strategy for fitting tree ensemble predictors on internet-scale data stored in a distributed file system (such as HDFS).
