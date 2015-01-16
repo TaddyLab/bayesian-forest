@@ -1,31 +1,31 @@
 
 import numpy as np
-import scipy as sp
+from scipy import sparse
 import pandas as pd
 import json
 
-varnames = pd.read_table('data/E5422/varnames.txt', header=None)
-varnames = varnames.squeeze().tolist()
+# varnames = pd.read_table('data/E5422/varnames.txt', header=None)
+# varnames = varnames.squeeze().tolist()
 
-users = {}
-r = 0
-ydx = open('data/E5422/ydx.txt','r')
+ydx = pd.read_table('data/E5422/ydx.txt', header=None, sep=" ")
+ydx.columns = ['i','j','v']
 
-for line in ydx:
-	i,j,x = line.split() 
-	if i in users:
-		users[i][varnames[int(j)-1]] = float(x)
-	else:
-		users[i] = {varnames[int(j)-1]:float(x)}
-	r += 1
-	if r % 1e6 == 0:
-		print("%.2e" % r)
+i = ydx['i'].values-1
+j = ydx['j'].values-1
+v = ydx['v'].values
 
-users = [json.dumps(users[i]) for i in users]
-with open("data/E5422/users.json", 'w') as fout:
-	for r in users:
-		fout.write(r+'\n')
+dcsr = sparse.csr_matrix( (v, (i,j)) )
 
-# mkdir data/E5422/users
-# split -l $(( $( wc -l < data/E5422/users.json ) / 256 + 1 )) -a 3 -d  data/E5422/users.json  data/E5422/users/part
+n = dcsr.shape[0]
+ind = np.arange(n)
+np.random.shuffle(ind)
+nb = int(np.ceil(n/256))
+indz = [ind[i:i+nb] for i in range(0,n,nb)]
 
+for b in range(256)
+	mb = sparse.coo_matrix(dcsr[indz[b],:])
+	np.savez("data/E5422/users%d"% b,data=mb.data, row=mb.row, col=mb.col, shape=mb.shape)
+	print(b, end=" ")
+
+#x = np.load("data/E5422/users%d.npz"% b)
+#x = sparse.csr_matrix( ( x['data'], (x['row'], x['col']) ), shape = x['shape'])

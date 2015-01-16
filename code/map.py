@@ -9,7 +9,6 @@ def rando():
 def block():
 
 
-
 with fin = open("data/E5422/users/part%s.txt" % b, 'r'):
 	for line in fin:
 		d = json.loads(line)
