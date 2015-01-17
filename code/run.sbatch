@@ -28,10 +28,10 @@ R CMD BATCH --no-save code/build.R $OUT/log/build.Rout
 cp code/$SCRIPT-*.R $OUT/log/.
 
 echo "mapping @ `date`" >> $LOG
-$para $srun "python code/$SLURM_JOB_NAME-map.py {1} > $OUT/log/map{1}.log" ::: {1..256}
+$para $srun "python code/$SLURM_JOB_NAME-map.py {1} > $OUT/log/map{1}.log" ::: {1..128}
 
 echo "reducing @ `date`" >> $LOG
-$para $srun "python code/$SLURM_JOB_NAME-reduce.py {1} > $OUT/log/reduce{1}.log" ::: {1..256}
+$para $srun "python code/$SLURM_JOB_NAME-reduce.py {1} > $OUT/log/reduce{1}.log" ::: {1..128}
 
 echo "done @" `date` >> $LOG
 

@@ -8,7 +8,7 @@ def rando():
 
 def block():
 
+ydx = np.load("data/E5422/users%d.npz"% b)
+ydx = sparse.csc_matrix( ( x['data'], (x['row'], x['col']) ), shape = x['shape'])
 
-with fin = open("data/E5422/users/part%s.txt" % b, 'r'):
-	for line in fin:
-		d = json.loads(line)
+
