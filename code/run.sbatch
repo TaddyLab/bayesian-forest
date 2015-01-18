@@ -21,8 +21,10 @@ echo `date` > $LOG
 echo "jobid $SLURM_JOBID running $SCRIPT" >> $LOG
 echo "$SLURM_NNODES nodes" >> $LOG
 
-export para="parallel -j $SLURM_NNODES --joblog $OUT/log/para.log"
-export srun="srun --exclusive -N1 -c16 --ntasks=1"  
+# export para="parallel -j $SLURM_NNODES --joblog $OUT/log/para.log"
+# export srun="srun --exclusive -N1 -c16 --ntasks=1"  
+export para="parallel -j $((SLURM_NNODES * 4)) --joblog $OUT/log/para.log"
+export srun="srun --exclusive -N1 -c4 --ntasks=1"  
 
 python code/prepro.py > $OUT/log/prepro.log
 

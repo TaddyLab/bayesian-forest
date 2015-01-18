@@ -16,7 +16,7 @@ varnames = varnames.squeeze().tolist()
 ydx = np.load("data/E5422/users000.npz")
 ydx = sparse.coo_matrix( ( ydx['data'], (ydx['row'], ydx['col']) ), shape = ydx['shape'] )
 
-Kprep = 12
+Kprep = 32
 for k in range(1,Kprep):
 	mk = np.load("data/E5422/users%03d.npz"% k)
 	mk = sparse.coo_matrix( ( mk['data'], (mk['row'], mk['col']) ), shape = mk['shape'])

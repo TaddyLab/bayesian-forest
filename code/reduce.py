@@ -15,6 +15,9 @@ from sklearn import ensemble
 from sklearn.externals import joblib
 import glob
 
+print("%d Cores available." % joblib.parallel.cpu_count())
+
+
 maps = glob.glob("results/%s/data/%s/map*.npz" % (J,b))
 ydx = []
 for m in maps:
@@ -30,7 +33,7 @@ ye = ydx[:,0].toarray().squeeze()
 Xe = ydx[:,1:]
 
 bf = ensemble.RandomForestRegressor(200,
-		min_samples_leaf=10,n_jobs=-1,verbose=5,bootstrap=2)
+		min_samples_leaf=10,n_jobs=-1,verbose=2,bootstrap=2)
 bf.fit(Xe,ye)
 
 joblib.dump(bf, "results/%s/fit/forest%s/bfr.pkl" % (J,b)) 
