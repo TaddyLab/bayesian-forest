@@ -22,8 +22,8 @@ np.random.shuffle(ind)
 nb = int(np.ceil(n/128))
 indz = [ind[i:i+nb] for i in range(0,n,nb)]
 
-for b in range(128):
-	mb = sparse.coo_matrix(ydx[indz[b],:])
-	np.savez("data/E5422/users%d"% b,data=mb.data, row=mb.row, col=mb.col, shape=mb.shape)
-	print("users%d: %d rows" % (b,mb.shape[0]))
+for k in range(128):
+	mk = sparse.coo_matrix(ydx[indz[k],:])
+	np.savez("data/E5422/users%03d"% k,data=mk.data, row=mk.row, col=mk.col, shape=mk.shape)
+	print("users%d: %d rows" % (k,mk.shape[0]))
 
