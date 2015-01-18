@@ -24,14 +24,14 @@ echo "$SLURM_NNODES nodes" >> $LOG
 export para="parallel -j $SLURM_NNODES --joblog $OUT/log/para.log"
 export srun="srun --exclusive -N1 -c16 --ntasks=1"  
 
-R CMD BATCH --no-save code/build.R $OUT/log/build.Rout
-cp code/$SCRIPT-*.R $OUT/log/.
+python code/prepro.py > $OUT/log/prepro.log
 
 echo "mapping @ `date`" >> $LOG
-$para $srun "python code/$SLURM_JOB_NAME-map.py {1} > $OUT/log/map{1}.log" ::: {1..128}
+$para $srun "python code/map.py {1} > $OUT/log/map{1}.log" ::: {0..127}
 
 echo "reducing @ `date`" >> $LOG
-$para $srun "python code/$SLURM_JOB_NAME-reduce.py {1} > $OUT/log/reduce{1}.log" ::: {1..128}
+blocks=$(ls results/$SLURM_JOB_NAME/data/ | cut -d'/' -f -1)
+$para $srun "python code/reduce.py {1} > $OUT/log/reduce{1}.log" ::: $blocks
 
 echo "done @" `date` >> $LOG
 

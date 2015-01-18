@@ -3,7 +3,7 @@ import sys
 sys.path.append("~/.local/lib/python3.4/site-packages")
 import os
 J = os.environ["SLURM_JOB_NAME"]
-os.makedirs("results/%s/pre" % J)
+os.makedirs("results/%s/fit/tree" % J)
 
 import numpy as np
 import pandas as pd
@@ -30,11 +30,11 @@ Xe = ydx[:,1:]
 msl = int(np.ceil(len(ye)/128))
 dt = tree.DecisionTreeRegressor(min_samples_leaf=msl)
 dt.fit(Xe,ye)
-tree.export_graphviz(dt,out_file="results/%s/pre/tree.dot" % J, feature_names=varnames[1:])
-#dot -Tpdf pretree.dot -o pretree.pdf
+tree.export_graphviz(dt,out_file="results/%s/fit/tree/dtr.dot" % J, feature_names=varnames[1:])
+#dot -Tpdf dtr.dot -o dtr.pdf
 
 from sklearn.externals import joblib
-joblib.dump(dt, "results/%s/pre/tree.pkl" % J) 
+joblib.dump(dt, "results/%s/fit/tree/dtr.pkl" % J) 
 
 
 

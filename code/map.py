@@ -13,7 +13,7 @@ from sklearn import tree
 from sklearn import ensemble
 from sklearn.externals import joblib
 
-dt = joblib.load('results/%s/pre/tree.pkl'%J) 
+dt = joblib.load('results/%s/fit/tree/dtr.pkl'%J) 
 
 ydx = np.load("data/E5422/users%s.npz"% k)
 ydx = sparse.csr_matrix( ( ydx['data'], (ydx['row'], ydx['col']) ), shape = ydx['shape'])
@@ -21,8 +21,8 @@ ydx = sparse.csr_matrix( ( ydx['data'], (ydx['row'], ydx['col']) ), shape = ydx[
 bvec = dt.tree_.apply(ydx[:,1:].astype(tree._tree.DTYPE))
 for b in set(bvec):
 	print(b)
-	os.makedirs("results/%s/data/block%d" % (J,b), exist_ok=True)
+	os.makedirs("results/%s/data/%d" % (J,b), exist_ok=True)
 	mb = sparse.coo_matrix(ydx[bvec==b,:])
-	np.savez("results/%s/data/block%d/map%s" % (J,b,k), 
+	np.savez("results/%s/data/%d/map%s" % (J,b,k), 
 		data=mb.data, row=mb.row, col=mb.col, shape=mb.shape)
 
