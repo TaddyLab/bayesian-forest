@@ -28,7 +28,7 @@ if PRETREE:
 	bvec = dt.tree_.apply(ydx[:,1:].astype(tree._tree.DTYPE))
 else:
 	print("mapping randomly")
-	bvec = rn.random_integers(0,127,ydx.shape[0])
+	bvec = rn.random_integers(0,99,ydx.shape[0])
 for b in set(bvec):
 	print(b)
 	os.makedirs("results/%s/fold%d/data/%d" % (J,F,b), exist_ok=True)
@@ -36,3 +36,4 @@ for b in set(bvec):
 	np.savez("results/%s/fold%d/data/%d/map%s" % (J,F,b,k), 
 		data=mb.data, row=mb.row, col=mb.col, shape=mb.shape)
 
+ 

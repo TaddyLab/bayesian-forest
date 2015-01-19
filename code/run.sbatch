@@ -9,7 +9,7 @@
 
 PRETREE=1
 BOOTSTRAP=2
-NTREE=16
+NTREE=80
 
 module load parallel
 OUT=results/$SLURM_JOB_NAME
@@ -53,7 +53,12 @@ for F in {0..9}; do
  	echo "predicting @ `date`" >> $LOG
  	$para $srun "python code/pred.py {1} $F > $OUT/fold$F/log/pred{1}.log" ::: {0..127}
 	python code/postpro.py $F > $OUT/fold$F/log/postpro.log
+
+	echo "cleanup @ `date`" >> $LOG
+	rm -rf $OUT/fold$F/data
 done
+
+
 
 echo "done @" `date` >> $LOG
 

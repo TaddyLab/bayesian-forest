@@ -15,6 +15,7 @@ from scipy import sparse
 from sklearn import tree
 from sklearn import ensemble
 from sklearn.externals import joblib
+import pickle
 
 dt = joblib.load('results/%s/fold%d/fit/tree/dtr.pkl'%(J,F)) 
 ydx = np.load("data/E5422/users%s.npz"% k)
@@ -23,7 +24,8 @@ bvec = dt.tree_.apply(ydx[:,1:].astype(tree._tree.DTYPE))
 
 for b in set(bvec):
 	print(b)
-	bfr = joblib.load("results/%s/fold%d/fit/forest%d/bfr.pkl" % (J,F,b)) 
+	#bfr = joblib.load("results/%s/fold%d/fit/forest%d/bfr.pkl" % (J,F,b)) 
+	bfr = pickle.load( open("results/%s/fold%d/fit/forest%d/bfr.pkl" % (J,F,b), 'rb') ) 
 	isb = bvec==b
 	pb = bfr.predict(ydx[isb,1:])
 	yb = ydx[isb,0].toarray()
