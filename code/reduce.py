@@ -4,9 +4,11 @@ import sys
 sys.path.append("~/.local/lib/python3.4/site-packages")
 import os
 J = os.environ["SLURM_JOB_NAME"]
-b = sys.argv[1]
+b = int(sys.argv[1])
 F = int(sys.argv[2])
-os.makedirs("results/%s/fold%d/fit/forest%s" % (J,F,b))
+BOOTSTRAP = int(sys.argv[3])
+NTREE = int(sys.argv[4])
+os.makedirs("results/%s/fold%d/fit/forest%d" % (J,F,b))
 
 import numpy as np
 from scipy import sparse
@@ -16,8 +18,7 @@ import glob
 
 print("%d Cores available." % joblib.parallel.cpu_count())
 
-
-maps = glob.glob("results/%s/fold%d/data/%s/map*.npz" % (J,F,b))
+maps = glob.glob("results/%s/fold%d/data/%d/map*.npz" % (J,F,b))
 ydx = []
 for m in maps:
 	print(m, end = ": ")
@@ -31,11 +32,11 @@ ydx = sparse.csc_matrix(ydx)
 ye = ydx[:,0].toarray().squeeze()
 Xe = ydx[:,1:]
 
-bf = ensemble.RandomForestRegressor(200,
-		min_samples_leaf=10,n_jobs=-1,verbose=2,bootstrap=2)
+bf = ensemble.RandomForestRegressor(NTREE,
+		min_samples_leaf=10,n_jobs=-1,verbose=2,bootstrap=BOOTSTRAP)
 bf.fit(Xe,ye)
 
-joblib.dump(bf, "results/%s/fold%d/fit/forest%s/bfr.pkl" % (J,F,b)) 
+joblib.dump(bf, "results/%s/fold%d/fit/forest%d/bfr.pkl" % (J,F,b)) 
 
 # # note that the backend="threading" is 'hardcoded into the code 
 # # because tree is internally releasing the Python GIL making 

@@ -7,39 +7,51 @@
 #SBATCH --constraint=ib
 #SBATCH --exclusive
 
+PRETREE=1
+BOOTSTRAP=2
+NTREE=16
+
 module load parallel
 OUT=results/$SLURM_JOB_NAME
 LOG=$OUT/an_sbatch.log
 
 mkdir -p $OUT
-rm -rf $OUT
+rm -rf $OUT/*
+
+mkdir -p $OUT/code
+cp code/*.py $OUT/code/.
 
 echo `date` > $LOG
 echo "jobid $SLURM_JOBID running $SCRIPT" >> $LOG
 echo "$SLURM_NNODES nodes" >> $LOG
+echo "pretree=$PRETREE for mapping" >> $LOG
+echo "bootstrap=$BOOTSTRAP in forest training" >> $LOG
+echo "$NTREE trees per mini-forest" >> $LOG
 
-export para="parallel -j $SLURM_NNODES --joblog $OUT/log/para.log"
 export srun="srun --exclusive -N1 -c16 --ntasks=1"  
 
 for F in {0..9}; do
-	echo "\nfold=$F"
+	export para="parallel -j $SLURM_NNODES --joblog $OUT/fold$F/log/para.log"
+
+	echo "*****fold=$F" >> $LOG
 	mkdir -p $OUT/fold$F/log
 	mkdir -p $OUT/fold$F/data
 	mkdir -p $OUT/fold$F/fit
 	mkdir -p $OUT/fold$F/pred
 
- 	echo "fold $F pre-tree @ `date`" >> $LOG
- 	python code/prepro.py $F > $OUT/fold$F/log/prepro.log
+ 	if [ "$PRETREE" -eq 1 ]; then 
+ 		echo "pre-tree @ `date`" >> $LOG
+ 		python code/prepro.py $F > $OUT/fold$F/log/prepro.log; fi
 
- 	echo "fold $F mapping @ `date`" >> $LOG
- 	$para $srun "python code/map.py {1} $F > $OUT/fold$F/log/map{1}.log" ::: {1..127}
+ 	echo "mapping @ `date`" >> $LOG
+ 	$para $srun "python code/map.py {1} $F $PRETREE > $OUT/fold$F/log/map{1}.log" ::: {0..127}
 
- 	echo "fold $F reducing @ `date`" >> $LOG
- 	blocks=$(ls results/$SLURM_JOB_NAME/data/ | cut -d'/' -f -1)
- 	$para $srun "python code/reduce.py {1} $F > $OUT/fold$F/log/reduce{1}.log" ::: $blocks
+ 	echo "reducing @ `date`" >> $LOG
+ 	blocks=$(ls results/$SLURM_JOB_NAME/fold$F/data/ | cut -d'/' -f -1)
+ 	$para $srun "python $REDUCE {1} $F $BOOTSTRAP $NTREE > $OUT/fold$F/log/reduce{1}.log" ::: $blocks
 
- 	echo "fold $F predicting @ `date`" >> $LOG
- 	$para $srun "python code/pred.py {1} $F > $OUT/fold$F/log/pred{1}.log" ::: {1..127}
+ 	echo "predicting @ `date`" >> $LOG
+ 	$para $srun "python code/pred.py {1} $F > $OUT/fold$F/log/pred{1}.log" ::: {0..127}
 	python code/postpro.py $F > $OUT/fold$F/log/postpro.log
 done
 
