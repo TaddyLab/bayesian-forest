@@ -48,7 +48,7 @@ for F in {0..9}; do
 
  	echo "reducing @ `date`" >> $LOG
  	blocks=$(ls results/$SLURM_JOB_NAME/fold$F/data/ | cut -d'/' -f -1)
- 	$para $srun "python $REDUCE {1} $F $BOOTSTRAP $NTREE > $OUT/fold$F/log/reduce{1}.log" ::: $blocks
+ 	$para $srun "python code/reduce.py {1} $F $BOOTSTRAP $NTREE > $OUT/fold$F/log/reduce{1}.log" ::: $blocks
 
  	echo "predicting @ `date`" >> $LOG
  	$para $srun "python code/pred.py {1} $F > $OUT/fold$F/log/pred{1}.log" ::: {0..127}
