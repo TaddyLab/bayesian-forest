@@ -7,9 +7,10 @@
 #SBATCH --constraint=ib
 #SBATCH --exclusive
 
-PRETREE=1
+RANDO=0
+DIVISOR=50
 BOOTSTRAP=2
-NTREE=80
+NTREE=160
 
 module load parallel
 OUT=results/$SLURM_JOB_NAME
@@ -24,7 +25,8 @@ cp code/*.py $OUT/code/.
 echo `date` > $LOG
 echo "jobid $SLURM_JOBID running $SCRIPT" >> $LOG
 echo "$SLURM_NNODES nodes" >> $LOG
-echo "pretree=$PRETREE for mapping" >> $LOG
+echo "rando=$RANDO for mapping" >> $LOG
+if [ "$RANDO" -eq 0 ]; then echo "msl divisor=$DIVISOR for pre-pretree" >> $LOG; fi
 echo "bootstrap=$BOOTSTRAP in forest training" >> $LOG
 echo "$NTREE trees per mini-forest" >> $LOG
 
@@ -39,19 +41,19 @@ for F in {0..9}; do
 	mkdir -p $OUT/fold$F/fit
 	mkdir -p $OUT/fold$F/pred
 
- 	if [ "$PRETREE" -eq 1 ]; then 
+ 	if [ "$RANDO" -eq 0 ]; then 
  		echo "pre-tree @ `date`" >> $LOG
- 		python code/prepro.py $F > $OUT/fold$F/log/prepro.log; fi
+ 		python code/prepro.py $F $DIVISOR > $OUT/fold$F/log/prepro.log; fi
 
  	echo "mapping @ `date`" >> $LOG
- 	$para $srun "python code/map.py {1} $F $PRETREE > $OUT/fold$F/log/map{1}.log" ::: {0..127}
+ 	$para $srun "python code/map.py {1} $F $RANDO > $OUT/fold$F/log/map{1}.log" ::: {0..31}
 
  	echo "reducing @ `date`" >> $LOG
  	blocks=$(ls results/$SLURM_JOB_NAME/fold$F/data/ | cut -d'/' -f -1)
  	$para $srun "python code/reduce.py {1} $F $BOOTSTRAP $NTREE > $OUT/fold$F/log/reduce{1}.log" ::: $blocks
 
  	echo "predicting @ `date`" >> $LOG
- 	$para $srun "python code/pred.py {1} $F > $OUT/fold$F/log/pred{1}.log" ::: {0..127}
+ 	$para $srun "python code/pred.py {1} $F $RANDO > $OUT/fold$F/log/pred{1}.log" ::: {0..31}
 	python code/postpro.py $F > $OUT/fold$F/log/postpro.log
 
 	echo "cleanup @ `date`" >> $LOG

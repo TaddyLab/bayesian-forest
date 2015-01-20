@@ -15,5 +15,5 @@ for f in glob.glob("results/%s/fold%d/pred/*.csv" % (J,F)):
 	yy = np.vstack([yy, mf])
 
 rmse = np.sqrt( np.mean( (yy[:,0]-yy[:,1])**2 ) )
-with open("results/%s/mse.txt" % J, 'a') as fout:
+with open("results/%s/rmse.txt" % J, 'a') as fout:
 	fout.write("%.2f\n" % rmse)

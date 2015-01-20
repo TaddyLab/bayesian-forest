@@ -37,7 +37,6 @@ bf = ensemble.RandomForestRegressor(NTREE,
 		min_samples_leaf=10,n_jobs=-1,verbose=2,bootstrap=BOOTSTRAP)
 bf.fit(Xe,ye)
 
-#joblib.dump(bf, "results/%s/fold%d/fit/forest%d/bfr.pkl" % (J,F,b)) 
 pickle.dump(bf, open("results/%s/fold%d/fit/forest%d/bfr.pkl" % (J,F,b), 'wb'))
 
 # # note that the backend="threading" is 'hardcoded into the code 

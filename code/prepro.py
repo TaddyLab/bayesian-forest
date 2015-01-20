@@ -4,6 +4,7 @@ sys.path.append("~/.local/lib/python3.4/site-packages")
 import os
 J = os.environ["SLURM_JOB_NAME"]
 F = int(sys.argv[1])
+D = float(sys.argv[2])
 os.makedirs("results/%s/fold%d/fit/tree" % (J,F))
 
 import numpy as np
@@ -18,7 +19,7 @@ varnames = varnames.squeeze().tolist()
 ydx = []
 lo = {F*10 + f for f in range(10)}
 kvec = [k for k in range(128) if k not in lo]
-ksamp = random.sample(kvec, 28)
+ksamp = random.sample(kvec, 32)
 for k in ksamp:
 	print("adding %03d" % k)
 	mk = np.load("data/E5422/users%03d.npz"% k)
@@ -29,7 +30,8 @@ ydx = sparse.csc_matrix(ydx)
 ye = ydx[:,0].toarray().squeeze()
 Xe = ydx[:,1:]
 
-msl = int(np.ceil(len(ye)/200))
+msl = int(np.ceil(len(ye)/D))
+print("%d min samples per leaf" % msl)
 dt = tree.DecisionTreeRegressor(min_samples_leaf=msl)
 dt.fit(Xe,ye)
 tree.export_graphviz(dt,
