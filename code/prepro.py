@@ -17,9 +17,9 @@ varnames = pd.read_table('data/E5422/varnames.txt', header=None)
 varnames = varnames.squeeze().tolist()
 
 ydx = []
-lo = {F*10 + f for f in range(10)}
-kvec = [k for k in range(128) if k not in lo]
-ksamp = random.sample(kvec, 32)
+lo = {F*5 + f for f in range(5)}
+kvec = [k for k in range(64) if k not in lo]
+ksamp = random.sample(kvec, 16)
 for k in ksamp:
 	print("adding %03d" % k)
 	mk = np.load("data/E5422/users%03d.npz"% k)

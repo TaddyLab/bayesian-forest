@@ -1,9 +1,11 @@
-
+import sys
 import numpy as np
 import pandas as pd
 import numpy.random as rn
 from scipy import sparse
 
+K = int(sys.argv[1])
+print(K)
 # varnames = pd.read_table('data/E5422/varnames.txt', header=None)
 # varnames = varnames.squeeze().tolist()
 
@@ -19,10 +21,10 @@ ydx = sparse.csr_matrix( (v, (i,j)) )
 n = ydx.shape[0]
 ind = np.arange(n)
 np.random.shuffle(ind)
-nb = int(np.ceil(n/128))
+nb = int(np.ceil(n/K))
 indz = [ind[i:i+nb] for i in range(0,n,nb)]
 
-for k in range(128):
+for k in range(K):
 	mk = sparse.coo_matrix(ydx[indz[k],:])
 	np.savez("data/E5422/users%03d"% k,data=mk.data, row=mk.row, col=mk.col, shape=mk.shape)
 	print("users%d: %d rows" % (k,mk.shape[0]))

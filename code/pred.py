@@ -8,7 +8,7 @@ k = sys.argv[1].zfill(3)
 F = int(sys.argv[2])
 RANDO = int(sys.argv[3])
 
-if (F*10 > int(k)) or (int(k) >= (F*10+10)):
+if (F*5 > int(k)) or (int(k) >= (F*5+5)):
 	print("i'm IN sample... take a hike.")
 	sys.exit(0)
 

@@ -8,7 +8,7 @@ k = sys.argv[1].zfill(3)
 F = int(sys.argv[2])
 RANDO = int(sys.argv[3])
 
-if F*10 <= int(k) < (F*10+10):
+if F*5 <= int(k) < (F*5+5):
 	print("feeling left out")
 	sys.exit(0)
 
