@@ -76,3 +76,42 @@ def readpart(k):
 	return( sparse.coo_matrix( yx ) )
 
 
+parts = np.arange(1500)
+random.shuffle(parts)
+
+fout = open("data/bigeg/training.txt", 'w')
+n = 0
+for i in range(1000):
+	yx = readpart(parts[i])
+	yx = np.vstack([yx.row+n,yx.col,yx.data]).transpose()
+	np.savetxt(fout, yx, sep=" ")
+	print(i)
+
+fout.close()
+
+fout = open("data/bigeg/validate.txt", 'w')
+n = 0
+for i in range(1000,1500):
+	yx = readpart(parts[i])
+	yx = np.vstack([yx.row+n,yx.col,yx.data]).transpose()
+	np.savetxt(fout, yx, sep=" ")
+	print(i)
+
+fout.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
