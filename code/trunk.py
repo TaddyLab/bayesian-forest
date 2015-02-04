@@ -47,9 +47,8 @@ y = yx[:,0].toarray().squeeze().astype(int)
 
 ## fit trunk
 msl = 250000
-trunk = tree.DecisionTreeRegressor(min_samples_leaf=msl)
+trunk = tree.DecisionTreeClassifier(min_samples_leaf=msl)
 trunk.fit(yx[:,1:],y)
-
 joblib.dump(trunk, "results/bigeg/trunk.pkl") 
 
 ## output
@@ -59,21 +58,24 @@ tree.export_graphviz(trunk,
 	out_file="results/bigeg/trunk.dot", 
 	feature_names=varnames[1:])
 
+#trunk = joblib.load("results/bigeg/trunk.pkl")
+#yx = joblib.load("results/bigeg/yx.pkl")
+
 ## send everyone 
 yx = sparse.csr_matrix(yx)
-bvec = trunk.tree_.apply(yx[:,1:].astype(trunk._tree.DTYPE))
+bvec = trunk.tree_.apply(yx[:,1:].astype(tree._tree.DTYPE))
 for b in set(bvec):
 	print(b)
 	mb = sparse.coo_matrix(yx[bvec==b,:])
-	np.savez("block_%d" % b, 
+	np.savez("data/bigeg/block_%d" % b, 
 		data=mb.data, row=mb.row, col=mb.col, shape=mb.shape)
 
 ## random allocations for comparison
-bvec = rn.random_integers(0,len(set(bvec))-1,yx.shape[0])
+bvec = np.random.random_integers(0,len(set(bvec))-1,yx.shape[0])
 for b in set(bvec):
 	print(b)
 	mb = sparse.coo_matrix(yx[bvec==b,:])
-	np.savez("rsamp_%d" % b, 
+	np.savez("data/bigeg/rsamp_%d" % b, 
 		data=mb.data, row=mb.row, col=mb.col, shape=mb.shape)
 
 
