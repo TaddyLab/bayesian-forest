@@ -33,11 +33,11 @@ mcycle_bt.fit(Xm, ym, sample_weight=omega)
 mcycle_bf = ensemble.RandomForestRegressor(100,min_samples_leaf=5, bootstrap=2)
 mcycle_bf.fit(Xm,ym)
 
-fig = plt.figure(figsize=(11,4))
+fig = plt.figure(figsize=(16,4))
 
 
-fig.add_subplot(1,3,2)
-mcycle_plot(mcycle_bt, " draw", s=omega*20)
+fig.add_subplot(1,3,1)
+mcycle_plot(mcycle_dt, "sample CART tree")
 
 fig.add_subplot(1,3,2)
 mcycle_plot(mcycle_bt, "Bayesian tree draw", s=omega*20)
