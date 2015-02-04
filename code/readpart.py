@@ -4,7 +4,7 @@ from scipy import sparse
 
 def readpart(k):
 
-	D = pd.read_csv("data/bigeg/part-%05d.gz"%k, compression="gzip")
+	D = pd.read_csv("data/bigeg/parts/part-%05d.gz"%k, compression="gzip")
 	D = D.fillna(0)
 	
 	# numeric

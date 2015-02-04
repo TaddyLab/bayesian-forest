@@ -11,7 +11,6 @@ import pandas as pd
 from scipy import sparse
 import random
 
-
 parts = np.arange(1500)
 random.shuffle(parts)
 with open("data/bigeg/shuffle.txt", "w") as fout:
@@ -46,7 +45,7 @@ joblib.dump(yx, "data/bigeg/yx.pkl")
 y = yx[:,0].toarray().squeeze().astype(int)
 
 ## fit trunk
-msl = 250000
+msl = 500000
 trunk = tree.DecisionTreeClassifier(min_samples_leaf=msl)
 trunk.fit(yx[:,1:],y)
 joblib.dump(trunk, "results/bigeg/trunk.pkl") 

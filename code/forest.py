@@ -7,8 +7,8 @@ import sys
 sys.path.append("~/.local/lib/python3.4/site-packages")
 samp = sys.argv[1]
 
-MSL=1000
-NJ=10
+MSL=100
+NJ=20
 NTREE=100
 
 import numpy as np
@@ -17,16 +17,16 @@ from sklearn import ensemble
 from sklearn.externals import joblib
 import pickle
 
-ydx = np.load("data/bigeg/%s.npz"% samp)
-ydx = sparse.csc_matrix( 
-	( ydx['data'], (ydx['row'], ydx['col']) ), 
-	shape = ydx['shape'])
+yx = np.load("data/bigeg/%s.npz"% samp)
+yx = sparse.csc_matrix( 
+	( yx['data'], (yx['row'], yx['col']) ), 
+	shape = yx['shape'])
 
-y = ydx[:,0].toarray().squeeze().astype(int)
+y = yx[:,0].toarray().squeeze().astype(int)
 
 forest = ensemble.RandomForestClassifier(
 		NTREE, min_samples_leaf=MSL,n_jobs=NJ,verbose=2)
-forest.fit(ydx[:,1:],y)
+forest.fit(yx[:,1:],y)
 
 pickle.dump(forest, open("results/bigeg/forest_%s.pkl" % samp, 'wb'))
 
