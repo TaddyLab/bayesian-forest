@@ -67,9 +67,15 @@ rdata = pd.read_table("graphs/bartfried.txt", sep=" ")
 rdata.columns = ["BART","BCART"]
 
 DF = pd.concat([RMSE,rdata], axis=1)
-mods = ['DT','RF','BF','ET','BART','BCART']
+mods = ['DT','BCART','RF','BF','ET','BART']
 DF = DF.reindex_axis(mods, axis=1)
 DF.mean().sort(inplace=False)
+# BART     1.811829
+# ET       2.624876
+# BF       2.666475
+# RF       2.741743
+# DT       3.690980
+# BCART    3.910470
 
 fig = plt.figure(figsize=(6,3.3))
 bp = plt.boxplot(DF.values, sym='r.', labels=mods, patch_artist=True)
