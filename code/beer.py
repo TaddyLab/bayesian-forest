@@ -1,6 +1,6 @@
 import sys
-# give preference to local update
-sys.path.append("~/.local/lib/python3.4/site-packages")
+# # give preference to local update
+# sys.path.append("~/.local/lib/python3.4/site-packages")
 
 import numpy as np
 import scipy as sp
@@ -9,79 +9,83 @@ import matplotlib.pyplot as plt
 from sklearn import tree
 from sklearn import ensemble
 import numpy.random as rn
+from scipy import sparse
 
-def rmse(f,fhat):
-   return np.sqrt(np.mean( (f-fhat)**2 ))
+def mce(f,fhat):
+   return np.mean( f!=fhat )
 
-def EBF(x,y,test,f,k=None,mslpre=3000,nblock=5,pretree=True,ntree=100):
+def EBF(x,y,xtest,f,k=None,mslpre=3000,nblock=5,pretree=True,ntree=100):
     if pretree: 
-        dt = tree.DecisionTreeRegressor(min_samples_leaf=mslpre)
+        dt = tree.DecisionTreeClassifier(min_samples_leaf=mslpre)
         dt.fit(x,y)
+        print("fit done")
         bvec = dt.tree_.apply(x.astype(tree._tree.DTYPE))
-        print("%d leaves" % sum(dt.tree_.feature < 0), end=" ")
+        print(sum(dt.tree_.feature < 0))
     else:
         bvec = rn.random_integers(0,nblock-1,x.shape[0])
         print("%d obs in train" % x.shape[0], end=" ")
     bset = set(bvec)
+    print(bset)
     forest = {}
     for b in bset:
         print(b, end=" ")
-        forest[b] = ensemble.RandomForestRegressor(
-                        ntree,bootstrap=1,min_samples_leaf=3,n_jobs=4)
-        isb = bvec==b
+        forest[b] = ensemble.RandomForestClassifier(
+                        ntree,min_samples_leaf=100,n_jobs=4)
+        isb = (bvec==b)
         forest[b].fit(x[isb,:],y[isb])
     
     if pretree:
         yhat = np.empty(test.shape[0])
-        btest = dt.tree_.apply(test.astype(tree._tree.DTYPE))
+        btest = dt.tree_.apply(xtest.astype(tree._tree.DTYPE))
         for b in bset:
             print(b, end=" ")
             isb = btest==b
-            yhat[isb] = forest[b].predict(test[isb,:])
+            yhat[isb] = forest[b].predict(xtest[isb,:])
+            print(yhat)
     else:
-        yhat = np.zeros(test.shape[0])
+        yhat = np.zeros(xtest.shape[0])
         for b in bset:
             print(b, end=" ")
-            yhat += forest[b].predict(test)/float(len(bset))
-            
-    err = rmse(f,yhat)
+            yhat += forest[b].predict(xtest)/float(len(bset))
+    
+    print(yhat)     
+    err = mce(f,yhat)
     print(err)
     return err
 
-wine = pd.read_csv('data/wine.csv')
-print(list(wine))
-yw = wine["quality"] 
-Xw = wine.drop("quality",axis=1)
-Xw["color"] = (Xw["color"].values == "red").astype("int")
-wine[wine.color == "white"]["quality"]
-wine_RMSE = {key: [] for key in ['EBF','SSF','BF']}
+beer = pd.read_csv('data/beer.csv')
+print(list(beer))
+yb = beer["brand"].values
+Xb = sparse.csr_matrix(beer.drop("brand",axis=1).values)
+
+MC = {key: [] for key in ['EBF','SSF','BF']}
 from sklearn.cross_validation import KFold
-kw = KFold(len(yw), n_folds=10,shuffle=True,random_state=5807)
+kb = KFold(len(yb), n_folds=10,shuffle=True,random_state=5800)
 
 k = 0
-for train, test in kw:
+for train, test in kb:
     print(k)
 
-    Xtrain = Xw.iloc[train].values
-    Xtest = Xw.iloc[test].values
-    y = yw[train]
-    f = yw[test]
+    Xtrain = Xb[train,:]
+    Xtest = Xb[test,:]
+    y = yb[train]
+    f = yb[test]
     
-    wine_RMSE['EBF'] += [EBF(Xtrain,y,Xtest,f,k=k,mslpre=1000)]
-    wine_RMSE['SSF'] += [EBF(Xtrain,y,Xtest,f,k=k,pretree=False)]
-    wine_RMSE['BF'] += [EBF(Xtrain,y,Xtest,f,k=k,pretree=False,nblock=1)]
+    MC['EBF'] += [EBF(Xtrain,y,Xtest,f,k=k,mslpre=10000)]
+    MC['SSF'] += [EBF(Xtrain,y,Xtest,f,k=k,pretree=False)]
+    MC['BF'] += [EBF(Xtrain,y,Xtest,f,k=k,pretree=False,nblock=1)]
 
     k+=1
 
 
-DF = pd.DataFrame(wine_RMSE)
+DF = pd.DataFrame(MC)
 me = DF.mean()
 me.sort()
 pe = [round((e - me[0])/me[0] * 100,1) for e in me]
 
-E = pd.DataFrame({'RSME': [round(e,4) for e in me.values], 'WTB':pe})
+E = pd.DataFrame({'MC': [round(e,4) for e in me.values], 'WTB':pe})
 E.index = me.index
-E
+print(E)
 #        RSME   WTB
 # BF   0.6058   0.0
 # EBF  0.6117   1.0
@@ -96,5 +100,5 @@ for b in bp["boxes"]:
 	b.set_facecolor("lightgrey")
 
 plt.setp(bp['whiskers'], color='black')
-plt.ylabel("RMSE", fontsize=15)
-fig.savefig("graphs/wine.pdf", format="pdf", bbox_inches="tight")
+plt.ylabel("missclass rate", fontsize=15)
+fig.savefig("graphs/beer.pdf", format="pdf", bbox_inches="tight")
