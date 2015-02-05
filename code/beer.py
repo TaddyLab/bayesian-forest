@@ -56,7 +56,7 @@ def EBF(x,y,xtest,f,k=None,mslpre=3000,nblock=5,pretree=True,ntree=100):
 beer = pd.read_csv('data/beer.csv')
 print(list(beer))
 yb = beer["brand"].values
-Xb = sparse.csr_matrix(beer.drop("brand",axis=1).values)
+Xb = beer.drop("brand",axis=1).values
 
 MC = {key: [] for key in ['EBF','SSF','BF']}
 from sklearn.cross_validation import KFold
