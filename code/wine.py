@@ -13,7 +13,7 @@ import numpy.random as rn
 def rmse(f,fhat):
    return np.sqrt(np.mean( (f-fhat)**2 ))
 
-def EBF(x,y,test,f,k=None,mslpre=3000,nblock=5,pretree=True,ntree=100):
+def EBF(x,y,test,f,k=None,mslpre=3000,nblock=5,pretree=True,ntree=100,msl=3):
     if pretree: 
         dt = tree.DecisionTreeRegressor(min_samples_leaf=mslpre)
         dt.fit(x,y)
@@ -27,7 +27,7 @@ def EBF(x,y,test,f,k=None,mslpre=3000,nblock=5,pretree=True,ntree=100):
     for b in bset:
         print(b, end=" ")
         forest[b] = ensemble.RandomForestRegressor(
-                        ntree,bootstrap=1,min_samples_leaf=3,n_jobs=4)
+                        ntree,bootstrap=2,min_samples_leaf=msl,n_jobs=4)
         isb = bvec==b
         forest[b].fit(x[isb,:],y[isb])
     
@@ -54,7 +54,7 @@ yw = wine["quality"]
 Xw = wine.drop("quality",axis=1)
 Xw["color"] = (Xw["color"].values == "red").astype("int")
 wine[wine.color == "white"]["quality"]
-wine_RMSE = {key: [] for key in ['EBF','SSF','BF']}
+wine_RMSE = {key: [] for key in ['DT','EBF','SSF','BF']}
 from sklearn.cross_validation import KFold
 kw = KFold(len(yw), n_folds=10,shuffle=True,random_state=5807)
 
@@ -67,6 +67,7 @@ for train, test in kw:
     y = yw[train]
     f = yw[test]
     
+    wine_RMSE['DT'] += [EBF(Xtrain,y,Xtest,f,mslpre=1000,msl=1000)]
     wine_RMSE['EBF'] += [EBF(Xtrain,y,Xtest,f,k=k,mslpre=1000)]
     wine_RMSE['SSF'] += [EBF(Xtrain,y,Xtest,f,k=k,pretree=False)]
     wine_RMSE['BF'] += [EBF(Xtrain,y,Xtest,f,k=k,pretree=False,nblock=1)]
@@ -81,13 +82,14 @@ pe = [round((e - me[0])/me[0] * 100,1) for e in me]
 
 E = pd.DataFrame({'RSME': [round(e,4) for e in me.values], 'WTB':pe})
 E.index = me.index
-E
+print(E)
 #        RSME   WTB
-# BF   0.6058   0.0
-# EBF  0.6117   1.0
-# SSF  0.6712  10.8
+# BF   0.5905   0.0
+# EBF  0.5953   0.8
+# SSF  0.6607  11.9
+# DT   0.7648  29.5
 
-mods = ['BF','EBF','SSF']
+mods = ['DT','SSF','BF','EBF']
 DF = DF.reindex_axis(mods, axis=1)
 
 fig = plt.figure(figsize=(3.3,3.3))
@@ -98,3 +100,4 @@ for b in bp["boxes"]:
 plt.setp(bp['whiskers'], color='black')
 plt.ylabel("RMSE", fontsize=15)
 fig.savefig("graphs/wine.pdf", format="pdf", bbox_inches="tight")
+
