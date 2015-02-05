@@ -1,54 +1,40 @@
+\documentclass{article}
 
-\documentclass[12pt]{article}
-\usepackage{amssymb,amsmath,natbib,graphicx,amsthm,
-  setspace,sectsty,anysize,times,dsfont,enumerate,adjustbox}
-
-\usepackage[svgnames]{xcolor}
-
-\usepackage{lscape,arydshln,relsize,rotating,multirow}
-\usepackage{caption}
-\captionsetup{%
-  font=small,
-  labelfont=normalfont,
-  singlelinecheck=false,
-  justification=justified
-}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{dsfont}
+\usepackage{amsthm}
 \usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{hyperref}
 
-\marginsize{1.1in}{.9in}{.3in}{1.4in}
-
-\sectionfont{\noindent\normalfont\large\bf}
-\subsectionfont{\noindent\normalfont\normalsize\bf}
-\subsubsectionfont{\noindent\normalfont\it}
-
-\usepackage[bottom,hang,flushmargin]{footmisc}
-
-\pdfminorversion=4
-\begin{document}
-
-\setstretch{1.1} 
-
-\pagestyle{empty}
-
-~
-\vskip 2cm
-
-\noindent {\Huge \bf Bayesian and Empirical Bayesian Forests} 
-
-\vskip 2cm
-
-\noindent{\Large Matt Taddy}
-
-{\large
-\vskip .25cm \noindent
-{The  University of Chicago Booth School of Business}\\
-\texttt{faculty.chicagobooth.edu/matt.taddy}}
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+ 
+\usepackage[accepted]{icml2015} 
 
 
+\begin{document} 
 
-\vskip 2cm
+\twocolumn[
+\icmltitle{Bayesian and Empirical Bayesian Forests}
 
-{\noindent \textbf{Abstract:} We interpret random forests via the framework of
+\icmlauthor{Matt Taddy}{taddy@chicagobooth.edu}
+\icmladdress{University of Chicago Booth School of Business}
+\icmlauthor{Chun-Shen Chen}{}
+\icmladdress{eBay}
+\icmlauthor{Jun Yun}{}
+\icmladdress{eBay}
+
+\icmlkeywords{decision trees, random forests, CART, nonparametric Bayesian, ensemble learning, big data, distributed computing, spark}
+
+\vskip 0.3in
+]
+
+\begin{abstract} 
+We interpret random forests via the framework of
 distribution-free nonparametric Bayesian analysis, so that the ensemble
 average is an approximation to posterior mean inference for the
 population CART tree. This insight motivates a class of fully Bayesian
@@ -57,7 +43,8 @@ performance and large gains in interpretability (from a Bayesian
 perspective) over their classically bagged predecessors. The framework
 is then applied to derive Empirical Bayesian Forests (EBF), in which a
 single short tree ``trunk'' is estimated and Bayesian Forests are fit to
-the data at each leaf of the trunk. We are able to derive conditions
+the data at each leaf of the trunk. 
+We are able to derive conditions
 under which this fixed trunk has high posterior probability, and
 demonstrate that in such settings the EBF performs nearly as well in
 out-of-sample prediction as the full BF. The advantage of
@@ -67,123 +54,132 @@ for fitting tree ensemble predictors on data stored in a distributed
 file system (such as HDFS), and we show that it strongly outperforms the
 common strategy of fitting forests to without-replacement data subsets.
 The work is illustrated on a number of publicly available examples, and
-on massive data from eBay.com.}
- 
-
-\newpage
-\setstretch{1.5}
-
-\pagestyle{plain}
-\vskip 1cm
+we describe work on its deployment at eBay.com.
+\end{abstract} 
 
 \section{Introduction}\label{introduction}
 
-Decision trees are a fundamental tool for machine learning. Such trees
-partition the attribute (input) space into regions of response
-homogenaity, such that the response (output) value associated with any
-point in a given region can be predicted from the average of other
-observations in that region. The classification and regression tree
-(CART) algorithm of Breiman et al (1984) is a common and useful recipe
-for building trees; it greedily grows a tree through a series of
-partitions on input features, each of which maximizes reduction in some
-measure of inpurity at the current tree leaves (terminal nodes; i.e.,
-the implied imput space partitioning). The development of \emph{random
-forests} (RF) by Brieman in 2001, which predict through the average of
-many CART trees fit to bootstrap re-samples of the data, provided an
-archetype for the hugely successful strategy of \emph{tree ensemble
-learning.} For prediction problems with relatively small input
-dimensions (or in conjunction with dimension reduction strategies)
-properly trained ensembles of trees -- or forests -- can predict
-out-of-the-box as well as any carefully tuned, application-specific
-alternative.
+Decision trees are a fundamental machine learning tool. They partition the
+feature (input) space into regions of response homogeneity, such that the
+response (output) value associated with any point in a given partition can be
+predicted from the average for that of neighbors. The classification and
+regression tree (CART) algorithm of \cite{breiman_classification_1984} is a
+common recipe for building trees; it grows greedily through a series of
+partitions on features, each of which maximizes reduction in some measure of
+impurity at the current tree leaves (terminal nodes; i.e., the implied input
+space partitioning). The development of random forests (RF) by
+\cite{breiman_random_2001}, which predict through the average of many CART
+trees fit to bootstrap re-samples of the data, is an archetype for the
+successful strategy of tree ensemble learning. For prediction problems with
+training sets that are large relative to the number of inputs (or in
+conjunction with dimension reduction strategies) properly trained ensembles of
+trees can predict out-of-the-box as well as any carefully tuned,
+application-specific alternative.
 
-This review details a straightforward, but not well-recognized,
-nonparametric Bayesian interpretation of random forests. Imagine the
-CART fit for a \emph{population} data generating process (DGP) with
-finite support. This CART greedily partitions the feature support to
-minimize impurity of the response distribtion conditional on each
-partition region, and we suppose it terminates while each leaf node has
-probability greater than some threshold. If we agree that such a
-population-CART is an useful statistic (i.e., would be useful for
-prediction) then its posterior mean is of interest as the optimal
-Bayesian estimator of a useful statistic. The posterior distribution of
-CART fits is induced by our nonparametric Bayesian posterior over random
-DGPs. The random forest set of trees is an approximate sample from this
-posterior, such that the RF predictor is a \emph{posterior mean}
-prediction rule. A simple alteration of the RF algorithm leads to an
-exact sample from the posterior, which we label as a \emph{Bayesian
-forest}. The altered BF algorithm offers a small but reliable
-improvement on RFs. However, the big gain is interpretability: when
-should R/B forests work, and when should we expect the more restrictive
-Bayesian tree models to be preferable?
+This article makes three contributions to understanding and application of
+decision tree ensembles (or, \textit{forests}).
 
-The interpretable model also allows us to assess appropriateness of
-various Big Data distributed computing schemes for their ability to
-recover the posterior mean. From this, we propose Empirical Bayesian
-Forests (EBF) in which a single short tree ``trunk'' is estimated and
-Bayesian Forests are fit to the data at each leaf of the trunk. We are
-able to derive conditions under which this fixed trunk has high
-posterior probability, and demonstrate that in such settings the EBF
-performs nearly as well in out-of-sample prediction as the full BF. The
-advantage of pre-partitioning a fixed trunk is that the EBF ensembles
-can be fit independently for each initial partition. This implies a
-novel strategy for fitting tree ensemble predictors on data stored in a
-distributed file system (such as HDFS), and we show that it strongly
-outperforms the common strategy of fitting forests to
-without-replacement data subsets. The work is illustrated on a number of
-publicly available examples, and on massive data from eBay.com.
 
-    \subsection{Nonparametric Bayesian
-Forests}\label{nonparametric-bayesian-forests}
+\textit{Bayesian forest:}  A nonparametric Bayesian (npB) point-of-view
+allows for the straightforward, but not well-recognized, interpretation of
+forests as a sample from a posterior over trees. Imagine CART applied to a
+data generating process (DGP) with finite support: the tree greedily splits
+support to minimize impurity of the partitioned response distributions
+(terminating at some minimum-leaf-probability threshold). We present a
+nonparametric Bayesian model for DGPs based on multinomial draws from
+(large) finite support, and derive the Bayesian forest (BF) algorithm for
+sampling from the distribution of CART trees implied by the posterior over
+DGPs.  Random forests are an approximation to this BF exact posterior sampler,
+and we show in examples that BFs provide a small but reliable gain in
+predictive performance over RFs.
 
-The classical \emph{distribution free} framework of nonparametric
-inference \cite{hollander_nonparametric_1999} has two components:
+\textit{Posterior tree variability:} Based upon this npB framework, we derive
+results on the approximate stability of CART  over different DGP realizations.
+In particular, we find that, for the data at a given node on the
+sample CART tree, the probability that the next split for a posterior
+DGP realization  matches the sample split location is
+\begin{equation}\label{treestable}
+\mathrm{p}\left(\text{split matches sample CART}\right) \gtrsim 1 - \frac{p}{\sqrt{n}} e^{-n},
+\end{equation}
+where $p$ is the number of possible split locations and $n$ the number of observations on the current node.  Even if $p$ grows with $n$, the result indicates that partitioning can be stable conditional on the data being split.  This conditioning is key: CART's well known instability is due to its recursive nature, such that a single split different from sample CART at some node removes any expectation of similarity  below that node.  However, for  large samples, (\ref{treestable}) implies that we will see little variation at the top hierarchy of  trees in a forest.  We illustrate such stability in our examples.
+
+
+\textit{Empirical Bayesian forests for Big Data:} the npB forest
+interpretation and tree-stability results lead us to propose empirical
+Bayesian forests (EBF) as an algorithm for building approximate BFs on massive
+distributed datasets (e.g., those stored on a Hadoop distributed file system).
+Traditional empirical Bayesian analysis fixes parameters in high levels of a
+hierarchical model at their marginal posterior mode, and proceeds to quantify
+uncertainty for the rest of the model conditional upon these fixed values.
+EBFs work the same way: we fit a single shallow CART \textit{trunk} to the
+sample data, and then sample a BF ensemble of \textit{branches} at each
+terminal node of this trunk.  The initial CART trunk thus maps observations to
+their branch, and each branch BF can be fit in parallel without any
+communication with the other branches.  When we expect little posterior
+variability about the trunk structure, an EBF sample should look similar to
+the (much more costly, or even infeasible) full BF sample.  In a number of
+experiments, we compare EBFs to the common distributed-computing strategy of
+fitting forests to random data subsets, and find that the EBFs lead to a large
+improvement in predictive performance.
+
+
+
+BFs offer small performance advantages over RFs, but their main usefulness is
+as a Bayesian interpretation for ensembles of CART trees. The intuition gained
+is especially valuable because there is little frequentest theory available on
+inference for decision trees.  The BF model also motivates the more practical
+contribution of EBFs, leading to new algorithms for distributed computing and
+cost savings from avoiding repeatedly sampling model levels about which you
+have little uncertainty. This type of strategy is the key to efficient machine
+learning with Big Data: focus the `Big' on the pieces of models that are most
+difficult to learn.
+
+
+Bayesian forests are introduced in Section 2 along with a survey
+of  Bayesian tree models, Section 3  investigates tree stability in
+theory and practice, and Section 4 presents the empirical Bayesian forest
+framework. Throughout, we use publicly available data on home prices in
+California to illustrate our ideas. We also provide a variety of other data
+analyses to benchmark performance, and close with description of how EBF
+algorithms are being built and perform in large-scale machine learning at
+eBay.com.
+
+
+
+\section{Bayesian forests}\label{bayesian-forests}
+
+Informally, write $dgp$ to represent the random variable defined over an as-of-yet undefined set of possible DGPs.
+A Bayesian analogue to classical `distribution-free' nonparametric
+statistical analysis \citep[e.g.,][]{hollander_nonparametric_1999} has two components:
 \begin{enumerate}
-\item find a \emph{nonparametric statistic} $\mathcal{T}(\text{DGP})$ that is of interest in your application regardless of the true data generating process (DGP),
-\item and derive a sampling distribution on $\mathcal{T}$ under minimal assumptions on the DGP.
+\item set a nonparametric statistic $\mathcal{T}(dgp)$ that is of interest in your application regardless of the true DGP,
+\item and build a flexible model for the DGP, so that the posterior distribution on $\mathcal{T}(dgp)$ can be derived from  posterior distribution on possible DGPs.
 \end{enumerate}
-The Bayesian version of this procedure replaces step 2 with 
-\begin{enumerate}
-\item[2b.] build a flexible model for the DGP, and derive the posterior distribution on $\mathcal{T}(\text{DGP})$ from the posterior distribution on possible DGPs.
-\end{enumerate}
-As detailed below, a simple and powerful nonparametric Bayesian framework models the data generating process through a multinomial probability
-function on a large number of possible $\mathbf{z} = \{\mathbf{x},y\}$ input-output points. We apply a limiting
-non-informative prior, which implies using the observed data as our
-approximation for the population support.  This provides a posterior over
-possible DGPs.
+In  the context of this article, $\mathcal{T}(dgp)$ refers to a CART tree.   Indeed, trees are useful precisely because they are good predictors regardless of the underlying data distribution -- they do not rely upon distributional assumptions to share information across training observations. 
+Our DGP model, detailed below, leads to a posterior for $dgp$ that is represented through random weighting of observed support.  A Bayesian forest contains CART fits corresponding to each draw of support weights, and the BF ensemble prediction is an approximate posterior mean.
 
-In the context of this article, 1. is clearly referring to decision trees.   Indeed, trees are useful precisely because they are good predictors regardless of the underlying data distribution -- they do not rely upon distributional assumptions to share information across training observations.  In particular, we'll define $\mathcal{T}$ as the greedy CART fit for a decision tree that terminates at some minimum leaf probability threshold.  For any realization of the DGP -- which will be a probability function over finite support -- the CART tree $\mathcal{T}(\text{DGP})$
-greedily splits to minimize impurity of the response distribtion conditional on each partition region.
-If we can sample from the posterior over DGPs (i.e., sample weights on the support), then a forest is constructed by fitting CART to each posterior DGP draw.  The forest is a posterior sample of tree statistics, and  the ensemble average prediction is interpretable as a posterior mean.
-
-
-The forest predictor is a posterior mean for the population CART tree.  This makes it clear when we should expect such forests to do a good job in prediction: when this tree provides a good summary of the conditional response distribution.  This will be the case when the greedy algorithm leads to a good partitioning -- for example, when you have lots of data and a relatively low dimensional feature space.  It will not do as well when the greedy algorithm is unreliable; e.g., in high dimensions, especially when many feature dimensions have little or no influence on the response (i.e., in situations were, even if nonparametric partitioning is the correct approach, the greedy algorithm is likely to converge to a minor mode much worse than best).  More importantly, a forest predictor will also be the inappropriate choice whenever compared against models with properties reflected in the true data generating process.  For example, if the response is a linear function of the features, then knowing the equation for this line through the population is \emph{much more useful} than any partitioning summary.  Or if the idiosynchratic error around the unknown conditional mean function is homoskedastic, we will get better predictions if we use that information when summarizing the conditional response distribution.  The use of Random or Bayesian forests should thus be reserved for situations where we \emph{need} to be distribution free -- when the conditional response function defies parametric representation. 
-
-    \subsubsection{Model for the data generating
-process}\label{model-for-the-data-generating-process}
+\subsection{Nonparametric model for the DGP}\label{dgpmodel}
 
 We employ a Dirichlet-multinomial sampling model in nonparametric
-Bayesian (NPB) analysis. The approach dates back to
-\cite{ferguson_bayesian_1973}. \cite{chamberlain_nonparametric_2003}
+Bayesian analysis. The approach dates back to
+\citet{ferguson_bayesian_1973}. \citet{chamberlain_nonparametric_2003}
 provide an overview in the context of econometric problems.
-\cite{rubin_bayesian_1981} proposed the Bayesian bootstrap as an
+\citet{rubin_bayesian_1981} proposed the Bayesian bootstrap as an
 algorithm for sampling from versions of the posterior implied by this
 strategy, and the algorithm has since become closely associated with
 this model.
 
-Use $\mathbf{z}_i = \{\mathbf{x}_i,y_i\}$ to denote the complete feature
-and response observation for unit $i$. We suppose that data are drawn
-\emph{independently} from a finite number $L$ of possible values,
-
-\begin{equation}
-\mathrm{p}(\mathbf{z}) = \sum_{l=1}^L \omega_l \mathbb{1}{[\mathbf{z} = \boldsymbol{\zeta}_l]}
+Use $\mathbf{z}_i = \{\mathbf{x}_i,y_i\}$ to denote the  features
+and response  for observation $i$. We suppose that data are drawn
+\emph{independently} from a finite  $L$  possible values,
+\begin{equation}\label{dgpeq}
+dgp = \mathrm{p}(\mathbf{z}) = \sum_{l=1}^L \omega_l \mathds{1}_{[\mathbf{z} = \boldsymbol{\zeta}_l]}
 \end{equation}
-
 where $\omega_l\geq0\forall l$ and $\sum_l \omega_l = 1$. Thus the
-generating process for observation $i$ samples $l_i$ from a multinomial
+generating process for observation $i$ draws $l_i$ from a multinomial
 with probability $\omega_{l_i}$, and this indexes one of the $L$ support
 points. Since $L$ can be arbitrarily large, and all data are stored as
-discrete (up to machine tolerance), this so-far implies no restrictive
+discrete, this so-far implies no restrictive
 assumptions beyond that of independence.
 
 The conjugate prior for $\boldsymbol{\omega}$ is a Dirichlet
@@ -200,53 +196,61 @@ $\mathbf{z}_i = \boldsymbol{\zeta}_i$ and
 $\mathbf{Z} = [\boldsymbol{\zeta}_1 \cdots \boldsymbol{\zeta}_n]'$. Then
 the posterior distribution for $\boldsymbol{\omega}$ has
 $\omega_i = a+1$ for $i\leq n$ and $\omega_l = a$ for $l>n$, so that
-
-\begin{equation}
-\mathrm{p}(\boldsymbol{\omega} ) \propto \prod_{i=1}^n \omega_i^{a} \prod_{l=n+1}^L \omega_l^{a-1}.
+\begin{equation}\label{omegapost}
+\mathrm{p}(\boldsymbol{\omega}) \propto \prod_{i=1}^n \omega_i^{a} \prod_{l=n+1}^L \omega_l^{a-1}.
 \end{equation}
-
 This, in turn, defines our posterior for the data generating process
-through our sampling model above.
+through our sampling model in (\ref{dgpeq}).
 
 There are many possible strategies for specification of $a$ and
-$\zeta_l$ for $l>n$. (The unobserved $\zeta_l$ act as data we imagine we
+$\zeta_l$ for $l>n$.\footnote{The unobserved $\zeta_l$ act as data we imagine we
 might have seen, to smooth the posterior away from the data we have
 actually observed. See \cite{poirier_bayesian_2011} for discussion of
-how such values can be useful in application.) The non-informative prior
-that arises as $a\rightarrow 0$ is a default with massive computational
-convenience: in this limit, $\omega_l = 0$ with probability one for
-$l>n$. (To see this, note that for $l>n$ the posterior has
+how such values can be useful in application.} The non-informative prior
+that arises as $a\rightarrow 0$ is a convenient default: in this limit, $\omega_l = 0$ with probability one for
+$l>n$.\footnote{For $l>n$ the posterior has
 $\mathbb{E}[\omega_l]=0$ with variance
-$\mathrm{var}(\omega_l) = \lim_{a \to 0} a[n+a(L-1)]/[(n+La)^2(n+La+1)] = 0$.)
+$\mathrm{var}(\omega_l) = \lim_{a \to 0} a[n+a(L-1)]/[(n+La)^2(n+La+1)] = 0$.}
 We apply this limiting prior throughout, such that our posterior for the
-data generating process is a multinomial draw from the \emph{observed
-data points}, with a uniform $\mathrm{Dir}(\boldsymbol{1})$ distribution
+data generating process is a multinomial draw from the observed
+data points, with a uniform $\mathrm{Dir}(\boldsymbol{1})$ distribution
 on the $\boldsymbol{\omega} = [\omega_1 \dots \omega_n]'$ sampling
-probabilities.
+probabilities.  We will also find it convenient to parametrize un-normalized $\boldsymbol{\omega}$ via
+IID exponential random variables: $\boldsymbol{\theta} = [\theta_1 \dots \theta_n]$, where $\theta_i \stackrel{ind}{\sim} \mathrm{Exp}(1)$ in the posterior and $\omega_i = \theta_i/|\boldsymbol{\theta}|$ with $|\boldsymbol{\theta}| = \sum_i \theta_i$.
 
-    \subsubsection{Posterior inference and Bayesian
-forests}\label{posterior-inference-and-bayesian-forests}
+\subsection{CART as posterior functional}
 
-Conditional upon $\boldsymbol{\omega}$, the population tree
-$\mathcal{T}(\text{DGP})$ is defined through a weighted-sample of the
-CART version. In particular, given data
+Conditional upon $\boldsymbol{\theta}$, the population tree
+$\mathcal{T}(dgp)$ is defined through a weighted-sample
+CART fit. In particular, given data
 $\mathbf{Z}^\eta = \{\mathbf{X}^\eta,\mathbf{y}^\eta\}$ in node $\eta$,
 sort through all dimensions of all observations in $\mathbf{Z}^\eta$ to
-find the split that minimizes the average of some $\boldsymbol{\omega}$
+find the split that minimizes the average of some $\boldsymbol{\omega}$-weighted
 impurity metric across the two new child nodes. For example, in the case
-of regression trees (which we focus on), the impurity to minimize is
+of regression trees, the impurity to minimize is
 weighted-squared error
 
 \begin{equation}
-\mathcal{I}(\mathbf{y}^\eta) = \sum_{i\in \eta} \omega_i (y_i - \bar y^\eta )^2
+\mathcal{I}(\mathbf{y}^\eta) = \sum_{i\in \eta} \theta_i (y_i - \bar y^\eta )^2
 \end{equation}
 
-with $\bar y^\eta =\omega_i y_i/\|\boldsymbol{\omega}^\eta\|_0$. This is
-repeated on every leaf of the tree, and the algorithm terminates when no
-split leads to a new child $\|\boldsymbol{\omega}^{\eta^c}\|_0$ with
-$\|\boldsymbol{\omega}^{\eta^{c}}\|_0$ greater than some threshold.
-We'll refer to the resulting weighted CART as
-$\mathcal{T}(\boldsymbol{\omega})$.
+with $\bar y^\eta = \sum_i \theta_i y_i/|\boldsymbol{\theta}^\eta|$. The split
+candidates are restricted to satisfy a minimum leaf probability, such that
+every node in the tree must have  $|\boldsymbol{\theta}^\eta|$ greater than
+some threshold.\footnote{In practice this can be replaced with thresholds on
+the minimum number of observations at each leaf.}   This  procedure is
+repeated on every currently-terminal tree node until it is no longer possible
+to split while satisfying the minimum probability threshold. To simplify
+notation, we refer to the resulting CART tree as
+$\mathcal{T}(\boldsymbol{\theta})$.
+
+
+
+
+\subsection{Posterior inference and Bayesian
+forests}\label{posterior-inference-and-bayesian-forests}
+
+
 
 Following \cite{rubin_bayesian_1981} we can obtain a sample from the
 posterior on $\mathcal{T}(\boldsymbol{\omega})$ through a simple
@@ -279,28 +283,9 @@ this alternative Bayesian bootstrap by passing \texttt{boostrap=2} in
 any forest class construction (this is documented as a boolean, so we're
 taking advantage of easy conversion to int).
 
-In detail, lines 88-89 of the \texttt{scikit-learn} \texttt{forest.py} module
-change from
 
-\texttt{indices = random\_state.randint(0, n\_samples, n\_samples) sample\_counts = np.bincount(indices, minlength=n\_samples)}
-
-to
-
-\begin{verbatim}
-        ### bayesian forest      
-        if forest.bootstrap == 2:
-            sample_counts = random_state.exponential(1,n_samples)
-        else:    
-            indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = np.bincount(indices, minlength=n_samples)
-        
-        #print("bs of %d and first 5 weights:" % forest.bootstrap)
-        #print(sample_counts[0:5])
-        ###################
-\end{verbatim}
-
-
-    \subsubsection{Motorcycle data
+The forest predictor is a posterior mean for the population CART tree.  This makes it clear when we should expect such forests to do a good job in prediction: when this tree provides a good summary of the conditional response distribution.  This will be the case when the greedy algorithm leads to a good partitioning -- for example, when you have lots of data and a relatively low dimensional feature space.  It will not do as well when the greedy algorithm is unreliable; e.g., in high dimensions, especially when many feature dimensions have little or no influence on the response (i.e., in situations were, even if nonparametric partitioning is the correct approach, the greedy algorithm is likely to converge to a minor mode much worse than best).  More importantly, a forest predictor will also be the inappropriate choice whenever compared against models with properties reflected in the true data generating process.  For example, if the response is a linear function of the features, then knowing the equation for this line through the population is \emph{much more useful} than any partitioning summary.  Or if the idiosynchratic error around the unknown conditional mean function is homoskedastic, we will get better predictions if we use that information when summarizing the conditional response distribution.  The use of Random or Bayesian forests should thus be reserved for situations where we \emph{need} to be distribution free -- when the conditional response function defies parametric representation. 
+\subsubsection{Motorcycle data
 illustration}\label{motorcycle-data-illustration}
 
 We illustrate the various models with a simple one-dimensional
@@ -309,9 +294,10 @@ impact in a crash? This data, taken from the MASS library for R,
 provides a series of measurements of crash-test-dummy head acceleration
 in simulated motorcycle accidents.
 
-\begin{figure}
-\includegraphics[width=\textwidth]{../graphs/mcycle}    
-\end{figure}    
+\begin{figure*}
+\includegraphics[width=\textwidth]{../graphs/mcycle}   
+\caption{Motorcycle data illustration.  The lines show each of a CART predictor fit to the data sample, CART fit to a sample with weights drawn IID from an exponential (point size is proportional to weight), and the BF predictor which averages over 100 weighted CART fits.} 
+\end{figure*}    
 
     \subsection{Bayesian tree-as-parameter
 models}\label{bayesian-tree-as-parameter-models}
@@ -464,9 +450,9 @@ A common simulation experiment in evaluating flexible predictors is
 based around the so-called Friedman function, first proposed for this
 purpose in \cite{friedman_multivariate_1991} MARS paper. The function is
 
-\[
-y = f(\mathbf{x}) +  \varepsilon = 10\mathrm{sin}(\pi x_1 x_2) + 20 (x_3-0.5)^2 + 10x_4 + 5x_5 + \varepsilon
-\]
+\begin{align}
+y &= f(\mathbf{x}) +  \varepsilon \\ &= 10\mathrm{sin}(\pi x_1 x_2) + 20 (x_3-0.5)^2 + 10x_4 + 5x_5 + \varepsilon\notag
+\end{align}
 
 where $\varepsilon \sim \mathrm{N}(0,1)$ and $x_j \sim \mathrm{U}(0,1)$.
 We include as features for training the spurrious $x_6 \dots x_{p}$,
@@ -477,27 +463,11 @@ training data). We calculate the root mean square error between
 predicted values and true $f(\mathbf{x})$ as a measure predictive
 performance.
 
-   
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_16_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
+\begin{figure}
+\includegraphics[width=0.475\textwidth]{../graphs/fried}
+\caption{Friedman data:  prediction Root Mean Square Error.}
+\end{figure}
 
-    \begin{verbatim}
-        bart     1.811829
-        ET       2.609423
-        BF       2.670613
-        RF       2.743355
-        DT       3.771928
-        bcart    3.910470
-\end{verbatim}
-        
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_19_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
     As predicted, the only model that assumes the (true) homoskedastic error
 structure, BART, well outperforms all others. The two forests, BF and
 RF, are both a large improvement over a single decision tree. The fully
@@ -527,11 +497,12 @@ online transaction data (e.g.~clicks or dollars spent), where the
 variable average effects and predictive performance on raw \$ or click
 scale are of primary interest.
 
-
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_22_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
+\begin{figure*}
+~~~\includegraphics[width=0.325\textwidth]{../graphs/ca_hist}
+~~~~~~~
+\includegraphics[width=0.6\textwidth]{../graphs/ca_rmse}
+\caption{California housing data}
+\end{figure*}
     
     It appears from the histogram (and investigating the raw values) that
 the data has been capped at 500k. In any case, the unconditional
@@ -546,26 +517,6 @@ psychological price thresholds, as well as a tail that includes values
 serial.
 
 
-    \begin{verbatim}
-bart-BF: 0.130740872538
-ET-BF: 0.0834811139448
-RF-BF: 0.00350375895282
-    \end{verbatim}
-
-            \begin{verbatim}
-         BF       48423.638310
-         RF       48593.303066
-         ET       52466.097577
-         bart     54754.587034
-         DT       65514.564877
-         bcart    82695.262723
-         dtype: float64
-\end{verbatim}
-        
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_27_2.png}
-    \end{center}
-    { \hspace*{\fill} \\}
     
     The results are now reversed (except for DT and BCART, which still
 underperform all others). The methods which place no assumptions on the
@@ -812,36 +763,22 @@ housing data from above. To begin, consider a \emph{trunk} with no less
 than 3500 census blocks (out of 20640 total) in each leaf partition.
 Greedy CART leads to a five node tree.
 
-    
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_35_0.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
+\begin{figure*}
+~~~
+\includegraphics[width=0.6\textwidth]{../graphs/ca_trunk}
+~~~~~~
+\includegraphics[width=0.32\textwidth]{../graphs/ca_splits}
+\caption{California housing data}
+\end{figure*}
 
-    \paragraph{Shallow tree variance}\label{shallow-tree-variance}
+\paragraph{Shallow tree variance}\label{shallow-tree-variance}
 
 The tree above represents the optimal (greedy) five partition CART. As
 predicted by theory, it turns out to be very stable. Running a random
 forest of trees which stop at this minimum leaf size, we get
 
 
-    \begin{verbatim}
-freq of CART tree ['medianIncome', 'medianIncome', 'latitude', 'housingMedianAge']: 69
-freq of  tree ['medianIncome', 'medianIncome', 'latitude', 'medianIncome']: 18
-freq of  tree ['medianIncome', 'medianIncome', 'medianIncome']: 5
-freq of  tree ['medianIncome', 'medianIncome', 'medianIncome', 'housingMedianAge']: 3
-freq of  tree ['medianIncome', 'medianIncome', 'housingMedianAge']: 3
-freq of first three ['medianIncome', 'medianIncome', 'latitude']: 88
-freq of first two ['medianIncome', 'medianIncome']: 100
-freq of any split on latitude: 88
-freq of any split on housingMedianAge: 75
-    \end{verbatim}
-        
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_39_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
+      
     
     We can also repeatedly sample 90\% of the data, and the CART fit with
 \texttt{min\_sample\_leaf=3500} is always similar: from visual
@@ -850,11 +787,6 @@ different values. Moreover, a Bayesian forest of trees limited to this
 node size does little better in OOS prediction (only 1\%), offering
 additional evidence that the single CART fit is close to the posterior
 mean at this depth.
-        
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_41_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
     
     \paragraph{OOS experiment}\label{oos-experiment}
 
@@ -869,14 +801,8 @@ entire dataset.
 2.0\% worse than full sample BF
 8.0\% better than random sub sampling
     \end{verbatim}
-
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_45_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \subsubsection{Another example: wine
-quality}\label{another-example-wine-quality}
+   
+\subsubsection{Beer and Wine}\label{another-example-wine-quality}
 
 As another test of OOS performance, we consider the Vino Verde dataset
 of http://www3.dsi.uminho.pt/pcortez/wine/. There are 4898 observations
@@ -888,23 +814,46 @@ EBF conditional on pre-tree partitioning into 5 leaves. Here, the EBF
 does close to as well as a full forest: it is only 1\% more expensive
 than the full BF fit.
 
-       
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_47_2.png}
-    \end{center}
-    { \hspace*{\fill} \\}
+\begin{figure}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=\textwidth]{../graphs/wine}
+\end{minipage}
+~~
+\begin{minipage}{0.4\linewidth}
+{\footnotesize
+\begin{tabular}{c c | l}
+$\overline{\text{RMSE}}$  & \% WTB & \\
+\cline{1-2}\rule{0pt}{3ex} 
+0.5905 &  0.0 & BF \\
+0.5953 &  0.8 & EBF \\
+0.6607 & 11.9 & SSF \\
+0.7648 & 29.5 & DT \\
+\end{tabular}}
+\end{minipage}
+\caption{Wine Data: 10-fold OOS prediction experiment Root Mean Square Error and \% Worse than Best for the mean RMSE. }
 
-    \begin{verbatim}
-1.0\% worse than full sample BF
-10.0\% better than random sub sampling
-    \end{verbatim}
+\end{figure}
 
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{bayesforest_files/bayesforest_49_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \subsection{Discussion}\label{discussion}
+\begin{figure}
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=\textwidth]{../graphs/beer}
+\end{minipage}
+~~
+\begin{minipage}{0.4\linewidth}
+{\footnotesize
+\begin{tabular}{c c | l}
+$\overline{\text{MCR}}$  & \% WTB & \\
+\cline{1-2}\rule{0pt}{3ex} 
+0.4341 &  0.0 & BF \\
+0.4531 &  4.4 & EBF \\
+0.5989 & 38.0 & SSF \\
+0.6979 & 60.8 & DT \\
+\end{tabular}}
+\end{minipage}
+\caption{Beer Data: 10-fold OOS prediction experiment Miss-Classification Rate and \% Worse than Best for the average MCR. }
+\end{figure}
+
+\subsection{Discussion}\label{discussion}
 
 Tree-based learning algorithms are massively useful and very popular.
 However, the lack of parametric structure makes it difficult to find
@@ -929,14 +878,9 @@ full dataset while working efficiently on small sub-samples. Even if one
 is not willing to assume in advance how deep a tree will be stable, in
 environments where forests are repeatedly re-fit (to incorporate
 incomming information) one can monitor the stability at higher levels
-and use this information to fix some tree elements in future runs. This
-type of strategy is the key to efficient machine learning on Big Data:
-focus the use of massive samples on the pieces of models that are most
-difficult to estimate.
+and use this information to fix some tree elements in future runs.
 
-\setstretch{1}\small
-\bibliographystyle{chicago}
-\bibliography{ipython}
+\bibliography{forests}
+\bibliographystyle{icml2015}
 
-    
-    \end{document}
+\end{document}
