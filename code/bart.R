@@ -13,7 +13,7 @@ for(k in 0:9){
 	xtest = X[test,]
 	ytrain = y[-test]
 	ytest = y[test]
-	bartFit = bart(xtrain,ytrain,xtest,ntree=100,ndpost=100)
+	bartFit = bart(xtrain,ytrain,xtest,ntree=100,ndpost=200)
 	bcartFit = bcart(xtrain,ytrain,xtest,tree=c(0.99,.1,2),basemax=1)
 	bfhat = bartFit$yhat.test.mean
 	bcfhat = bcartFit$ZZ.mean

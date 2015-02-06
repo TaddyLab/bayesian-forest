@@ -24,7 +24,7 @@ fig = plt.figure(figsize=(5,5))
 plt.hist(cah["medianHouseValue"]/100000,color="lightgrey", normed=1)
 plt.xlabel("median home value in $100k", fontsize=12)
 plt.ylabel("density", fontsize=12)
-fig.savefig("graphs/ca_hist.pdf", format="pdf", bbox_inches="tight")
+#fig.savefig("graphs/ca_hist.pdf", format="pdf", bbox_inches="tight")
 
 from sklearn.cross_validation import KFold
 kf = KFold(len(yh), n_folds=10,shuffle=True,random_state=5807)
@@ -97,7 +97,7 @@ for b in bp["boxes"]:
 plt.ylim(40000,90000)
 plt.setp(bp['whiskers'], color='black')
 plt.ylabel("RMSE", fontsize=15)
-fig.savefig("graphs/ca_rmse.pdf", format="pdf", bbox_inches="tight")
+#fig.savefig("graphs/ca_rmse.pdf", format="pdf", bbox_inches="tight")
 
 
 #### EBF
@@ -105,15 +105,15 @@ ca_trunk = tree.DecisionTreeRegressor(min_samples_leaf=3500)
 ca_trunk.fit(Xh,yh)
 
 ## plot it and show inline
-tree.export_graphviz(ca_trunk,feature_names=list(Xh),out_file="graphs/catrunk.dot")
+#tree.export_graphviz(ca_trunk,feature_names=list(Xh),out_file="graphs/catrunk.dot")
 ## a bunch of unescessary formatting (default is fine, but this is nicer)
-!sed -i  's/mse = [0-9]*\.[0-9]*\\n/ /g' graphs/catrunk.dot
-!sed -i  's/samples/size/g' graphs/catrunk.dot
-!sed -i  's/\[ /\$/g' graphs/catrunk.dot
-!sed -i  's/\.\]//g' graphs/catrunk.dot
-!sed -i  's/value/mean/g' graphs/catrunk.dot
+# !sed -i  's/mse = [0-9]*\.[0-9]*\\n/ /g' graphs/catrunk.dot
+# !sed -i  's/samples/size/g' graphs/catrunk.dot
+# !sed -i  's/\[ /\$/g' graphs/catrunk.dot
+# !sed -i  's/\.\]//g' graphs/catrunk.dot
+# !sed -i  's/value/mean/g' graphs/catrunk.dot
 
-!dot -Tpdf graphs/catrunk.dot -o graphs/catrunk.pdf
+# !dot -Tpdf graphs/catrunk.dot -o graphs/catrunk.pdf
 # note that 34.5 degrees lat is just north of santa barbara
 
 cah_forest = ensemble.RandomForestRegressor(n_estimators=100, bootstrap=2, n_jobs=4,
@@ -137,7 +137,7 @@ plt.xlim(xlim)
 plt.legend(frameon=False, loc='upper right')
 plt.xlabel("median income in $10k")
 plt.ylabel("log density")
-fig.savefig("graphs/ca_splits.pdf", format="pdf", bbox_inches="tight")
+#fig.savefig("graphs/ca_splits.pdf", format="pdf", bbox_inches="tight")
 
 
 def EBF(x,y,test,f,k=None,mslpre=3000,nblock=5,pretree=True,ntree=100):
@@ -196,7 +196,7 @@ pe = [round((e - me[0])/me[0] * 100,1) for e in me]
 
 E = pd.DataFrame({'RSME': [round(e) for e in me.values], 'WTB':pe})
 E.index = me.index
-E
+print(E)
 #     RSME      WTB
 # 0  48347        0
 # 1  48523    17662
@@ -221,4 +221,4 @@ for b in bp["boxes"]:
 #plt.ylim(40000,90000)
 plt.setp(bp['whiskers'], color='black')
 plt.ylabel("RMSE", fontsize=15)
-fig.savefig("graphs/ca_rmse.pdf", format="pdf", bbox_inches="tight")
+#fig.savefig("graphs/ca_rmse.pdf", format="pdf", bbox_inches="tight")
