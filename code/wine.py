@@ -99,5 +99,5 @@ for b in bp["boxes"]:
 
 plt.setp(bp['whiskers'], color='black')
 plt.ylabel("RMSE", fontsize=15)
-fig.savefig("graphs/wine.pdf", format="pdf", bbox_inches="tight")
+#fig.savefig("graphs/wine.pdf", format="pdf", bbox_inches="tight")
 
