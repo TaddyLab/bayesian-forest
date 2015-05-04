@@ -23,10 +23,13 @@
 
 \icmlauthor{Matt Taddy}{taddy@chicagobooth.edu}
 \icmladdress{University of Chicago Booth School of Business}
-\icmlauthor{Chun-Sheng Chen}{}
+\icmlauthor{Chun-Sheng Chen}{chunschen@ebay.com}
 \icmladdress{eBay}
-\icmlauthor{Jun Yun}{}
+\icmlauthor{Jun Yun}{junyu@ebay.com}
 \icmladdress{eBay}
+\icmlauthor{Mitch Wyle}{mwyle@ebay.com}
+\icmladdress{eBay}
+
 
 \icmlkeywords{decision trees, random forests, CART, nonparametric Bayesian, ensemble learning, big data, distributed computing, spark}
 
@@ -446,7 +449,7 @@ product of conditional probabilities for each successive split. After a enough
 steps, any specific tree approaches probability of zero. 
 
 However, it is possible that elements of the tree structure are
-fairly stable. For example, in the context of boosting,
+ stable. For example, in the context of boosting,
 \citet{appel_quickly_2013} argue that the conditionally optimal
 split locations for internal nodes can be learned from
 subsets of the full data allocated to each node.  They use this to propose
@@ -694,6 +697,11 @@ To close, we note that this work is motivated by the need for reliable forest fi
 separate locations corresponding to each branch.  Forests are then fit at each location (machine) for each branch.  
 
 Preliminary work at eBay.com applies EBFs for prediction of `Bad Buyer Experiences' (e.g. complaints, returns, or shipping problems) on the site.  Training on a relatively small sample of 12 million transactions, the EBF algorithm using 32 branch chunks is able to provide a 1.3\% drop in misclassification over the SSF alternatives.  This amounts to more than 20,000 extra detected BBE occurrences over the short sample window, potentially giving eBay the opportunity to contact those buyers and attempt to fix the problems or even stop them before they occur.
+
+\section*{Acknowledgments} 
+ 
+Taddy is also a scientific consultant at eBay and a Neubauer
+family faculty fellow at the University of Chicago.
 
 \bibliography{forests}
 \bibliographystyle{icml2015}
