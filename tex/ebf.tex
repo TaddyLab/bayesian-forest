@@ -421,6 +421,32 @@ $\overline{\text{RMSE}}$  & \% WTB & \\
 
 \begin{frame}
 
+{\bf Choosing the trunk depth}
+
+
+\vskip .5cm
+Distributed computing perspective: {\theme fix only as deep as you must!}
+
+\vskip .75cm
+{\small
+\begin{tabular}{c | c c c | c c c | c c c}
+& \multicolumn{3}{l|}{CA housing} & \multicolumn{3}{l|}{Wine} &\multicolumn{3}{l}{Beer} \\
+\cline{2-10} \rule{0pt}{3ex} 
+\!\!\!\!\!\!{\it Min Leaf Size in $10^3$} & 6 & 3 & 1.5 & 2  & 1 & 0.5 & 20 & 10 & 5\\
+\!\!\!\!\!\!{\it \% Worse Than Best} & \!1.6 & \!2.4 & \!4.3 & \!0.3 & \!0.8 & \!2.2 & \!1.0 & \!4.4 & \!7.6 
+\end{tabular}}
+
+\vskip .75cm
+Still, open questions.  e.g., more trees vs shallower trunk?
+
+\vskip .2cm
+No rigorous answer yet... maybe it's in the npB framework.
+
+
+\end{frame}
+
+\begin{frame}
+
 
 {\bf \theme EBFs at EBay: \bk predicting Bad Buyer Experiences}
 
