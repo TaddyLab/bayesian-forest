@@ -708,7 +708,7 @@ three examples.
 \caption{\label{msltab}\% Worse than Best on OOS error for different minimum leaf sizes (MSL) specified in thousands of observations.}
 \end{table}
 
-\subsection{Scaling for Big Data}
+\section{Scaling for Big Data}
 
 
 To close, we note that this work is motivated by the need for reliable forest fitting algorithms that can be deployed on millions or hundreds of millions of observations, as encountered when analyzing internet commerce data.  A number of additional engineering details are required for such deployment, but the basic approach is straightforward:  an initial trunk is fit (possibly to a data subset)\footnote{Note that the original CART trunk can itself be fit in distribution, e.g. using the \texttt{MLLib} library for Apache Spark.}, and this trunk  acts as a sorting function to map observations to 
