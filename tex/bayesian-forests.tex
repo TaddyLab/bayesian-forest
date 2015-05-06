@@ -25,7 +25,7 @@
 \icmladdress{University of Chicago Booth School of Business}
 \icmlauthor{Chun-Sheng Chen}{chunschen@ebay.com}
 \icmladdress{eBay}
-\icmlauthor{Jun Yun}{junyu@ebay.com}
+\icmlauthor{Jun Yu}{junyu@ebay.com}
 \icmladdress{eBay}
 \icmlauthor{Mitch Wyle}{mwyle@ebay.com}
 \icmladdress{eBay}
@@ -259,8 +259,8 @@ Bayesian bootstrap in Algorithm 1.
 \end{algorithm}
 
    We've implemented  BF through simple adjustment of the
-\texttt{ensemble} module of python's \texttt{scikit-learn} \citep{scikit-learn}.\footnote{Replace the variable \texttt{sample\_counts} in \texttt{forest.py}  to be
-drawn exponential rather than binomial when bootstrapping.}  As a quick illustration, Figure \ref{mcycle} shows three fits for the conditional mean  velocity of a motorcyle helmet after  impact in a crash: sample CART $\mathcal{T}(\mathbf{1})$, a single draw of $\mathcal{T}(\boldsymbol{\theta})$, and the BF average prediction \citep[data are from the MASS R package,][]{mass}.
+\texttt{ensemble} module of python's \texttt{scikit-learn} \citep{scikit-learn}.\footnote{Replace  variable \texttt{sample\_counts} in \texttt{forest.py}  to be
+drawn exponential rather than multinomial when bootstrapping.}  As a quick illustration, Figure \ref{mcycle} shows three fits for the conditional mean  velocity of a motorcyle helmet after  impact in a crash: sample CART $\mathcal{T}(\mathbf{1})$, a single draw of $\mathcal{T}(\boldsymbol{\theta})$, and the BF average prediction \citep[data are from the MASS R package,][]{mass}.
 
 Note that the Bayesian forest differs from Breiman's random
 forest only in that the weights are drawn from an exponential (or Dirichlet, when normalized) distribution
@@ -329,7 +329,7 @@ well on that scale.
 \begin{figure}
 ~\includegraphics[width=0.45\textwidth]{../graphs/fried}
 \vskip -.25cm
-\caption{Friedman experiment predictive RMSE over 100 runs.}
+\caption{\label{friedpic}Friedman experiment predictive RMSE over 100 runs.}
 \end{figure}
 
 \subsection{Friedman example}\label{friedman-example}
@@ -355,7 +355,7 @@ random draws from (\ref{friedfun}) and tested at 1000 new $\mathbf{x}$
 locations. Root mean square error (RMSE) is
 calculated between predicted and true $f(\mathbf{x})$.
 
-Results over 100 repeats are shown in  Figure \ref{friedfun}.\footnote{In this and the next example, CART-based algorithms had minimum-leaf-samples set at 3 and the ensembles contain 100 trees.  BART and BCART run at their \texttt{bayestree} and \texttt{tgp} R package defaults, except that BART draws only 200 trees after a burn-in of 100 MCMC iterations.  This is done to get comparable compute times; for these settings BART requires around 75 seconds per fold with the California housing data, compared to BF's 10 seconds when run in serial, and 3 seconds running on 4 cores.}
+Results over 100 repeats are shown in  Figure \ref{friedpic}.\footnote{In this and the next example, CART-based algorithms had minimum-leaf-samples set at 3 and the ensembles contain 100 trees.  BART and BCART run at their \texttt{bayestree} and \texttt{tgp} R package defaults, except that BART draws only 200 trees after a burn-in of 100 MCMC iterations.  This is done to get comparable compute times; for these settings BART requires around 75 seconds per fold with the California housing data, compared to BF's 10 seconds when run in serial, and 3 seconds running on 4 cores.}
 As forecast, the only model which assumes the true homoskedastic error
 structure, BART, well outperforms all others. The two forests, BF and
 RF, are both a large improvement over DT. 
@@ -395,7 +395,7 @@ restrictive error model.   BF again offers a small
 gain over RF.   Since the larger sample size makes observed support a better approximation to population support,  the forests outperform ET.  The EBF (empirical Bayesian forest) and SSF (sub-sample forest) predictors are based on distributed computing algorithms that we introduce later in Section 3.  At this point we note only that the massively scalable EBF is amongst the top performers; the next section helps explain why.
 
 
-\begin{table}[h]\hspace{-.25cm}
+\begin{table}
 {\footnotesize
 \begin{tabular}{r|c c c c c c c}
 &BF  &  RF &   EBF &  ET &   SSF &  BART & DT %&BCART 
@@ -627,7 +627,7 @@ SSF is a commonly applied strategy \citep[e.g., see mention, but not recommendat
 
  
 In the California housing  experiment of Figure \ref{calihist}
-and Table \ref{calistable}, EBF\footnote{EBFs use five node trunks  in this Section.  The SSFs are fit on data split into five equally sized subsets.} predictions are only 2\% worse than those from the full BF.  In contrast, SSF predictions are 10\% worse.
+and Table \ref{calitab}, EBF\footnote{EBFs use five node trunks  in this Section.  The SSFs are fit on data split into five equally sized subsets.} predictions are only 2\% worse than those from the full BF.  In contrast, SSF predictions are 10\% worse.
 
 We consider two additional prediction problems.  The first example, 
 taken from \cite{CorCer09}, involves prediction of an `expert' quality ranking on
@@ -705,7 +705,7 @@ three examples.
 \!\!\!\!\!\!MLS $10^3$ & 6 & 3 & 1.5 & 2  & 1 & 0.5 & 20 & 10 & 5\\
 \!\!\!\!\!\!\% WTB & \!1.6 & \!2.4 & \!4.3 & \!0.3 & \!0.8 & \!2.2 & \!1.0 & \!4.4 & \!7.6 
 \end{tabular}}
-\caption{\label{msltab}\% Worse than Best on OOS error for different minimum leaf sizes (MSL) specified in thousands of observations.}
+\caption{\label{msltab}\% Worse than Best on OOS error for different minimum leaf sizes (MLS) specified in thousands of observations.}
 \end{table}
 
 \section{Scaling for Big Data}
