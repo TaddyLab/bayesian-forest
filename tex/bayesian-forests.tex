@@ -31,7 +31,9 @@
 \icmladdress{eBay}
 
 
-\icmlkeywords{decision trees, random forests, CART, nonparametric Bayesian, ensemble learning, big data, distributed computing, spark}
+\icmlkeywords{decision trees, random forests, CART, 
+nonparametric Bayesian, ensemble learning, 
+big data, distributed computing, spark}
 
 \vskip 0.3in
 ]
@@ -420,7 +422,7 @@ split the DGP support into very low probability leaves will be able to
 reproduce the conditional response distribution of that DGP. However, this
 result says nothing about the structure of the underlying trees, nor does it
 say anything about the ability of a tree to predict when there is not enough
-data to finely partition the DGP.  Others have focused on the frequentest
+data to finely partition the DGP.  Others have focused on the frequentist
 properties of individual split decisions. In the  CHAID work of
 \citet{kass_exploratory_1980}, splits are based upon $\chi^2$ tests at each
 leaf node. \citet{loh_regression_2002} and
@@ -437,7 +439,7 @@ Despite this lack of theory, it is generally thought that there is large
   is often no-better than random (this motivates work by the same
   authors on extremely randomized trees). The intuition behind such randomness
   is clear: the probability of a tree having any given branch structure is the
-  product of conditional probabilities for each successive split. After a
+  product of conditional probabilities for each successive split. After 
   enough steps, any specific tree approaches probability of zero.
 
 However, it is possible that elements of the tree structure are
@@ -490,7 +492,7 @@ The Taylor approximation is then
 \end{align} with
 $\bar y_j(0) = \frac{1}{n_{\texttt{f}_j}}\sum_{i \in \texttt{f}_j}y_i$
 and
-$\bar y_j(t) = \frac{1}{n_{\texttt{t}_j}}\sum_{i \in \texttt{t}_j}y_i$
+$\bar y_j(1) = \frac{1}{n_{\texttt{t}_j}}\sum_{i \in \texttt{t}_j}y_i$
  the observed response averages in each partition.
 
     Suppose that
