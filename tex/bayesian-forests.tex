@@ -608,7 +608,7 @@ structure below. Finally, Section 3 demonstrated that, like high levels in a par
 
 An empirical Bayesian forest (EBF) takes advantage of this structure by fixing
 the highest levels in the hierarchy -- the earliest CART splits -- at a single
-estimate of high posterior probability. We fit a single
+estimate of high posterior probability.\footnote{These earliest splits -- requiring impurity search over large observation sets -- are also the most expensive to optimzie.} We fit a single
 shallow CART \textit{trunk} to the unweighted sample data, and  sample a
 BF ensemble of \textit{branches} at each terminal node of this trunk.  The
 initial CART trunk  maps observations to their branch, and each branch BF
@@ -617,7 +617,7 @@ communication with the other branches. That is, EBF replaces the BF posterior
 sample of trees with a conditional posterior sample that takes the pre-fit
 trunk as fixed. Since the trunk has relatively low variance for large samples
 (precisely the setting where such distribution is desirable), the EBF should
-provide predictions similar to that of the full BF at a fraction of the cost.\footnote{This is especially helpful, because the earliest splits in the tree -- requiring impurity search over }
+provide predictions similar to that of the full BF at a fraction of the cost.
 
 In contrast, consider the `sub-sample forest' (SSF) algorithm, which replaces the full data with random sub-samples of manageable size.  Independent forests are  fit to each sub-sample and predictions are averaged across all forests.
 SSF is a commonly applied strategy \citep[e.g., see mention, but not recommendation, of it in][]{panda_planet:_2009}, but it implies using only partial data for learning deep tree structure.  Although the tree trunks are stable, the full tree is highly uncertain and learning such structure is precisely where you want to use a full Big Data sample.
