@@ -206,7 +206,7 @@ Average prediction across trees:
 
 \begin{frame}
 
-{\theme \bf nonparametric statistics }
+{\theme \bf `distribution free' nonparametric statistics }
 
 \vskip .25cm
 1: Find some statistic that matters for your problem, \\~~~~regardless of the `data generating process' (DGP).
@@ -217,12 +217,12 @@ Average prediction across trees:
 \vskip .5cm
 For (2): say $\bm{z}_l = \{\bm{x}_l,y_l\}$ is a possible data point. Then
 \[
-\mr{p}(\bm{Z}) = \sum_{l=1}^L \omega_l \ds{1}{[\bm{Z} = \bm{z}_l]}
+\mr{p}(\bm{Z}) = \frac{1}{|\bs{\theta}|}\sum_{l=1}^L \theta_l \ds{1}{[\bm{Z} = \bm{z}_l]}
 \]
 where $L$ is a {\it large} number of possible values.
 \begin{itemize}
 \item Use sample as stand-in for the $L$  points.
-\item Bayesian  model for the $\omega_l$ weights.
+\item Bayesian  model for the $\theta_l$ weights.
 \item {\it This is essentially a bootstrap.}
 \end{itemize}
 
@@ -234,7 +234,6 @@ where $L$ is a {\it large} number of possible values.
 Our statistic of interest is the CART fit...
 
 \vskip .5cm
-\begin{center}
 {\sc Bayesian Forest}
 \begin{algorithmic}
    \FOR{$b=1$ {\bfseries to} $B$}
@@ -242,7 +241,6 @@ Our statistic of interest is the CART fit...
    \STATE run weighted-sample CART to get $\mathcal{T}_b = \mathcal{T}(\boldsymbol{\theta}^b)$
    \ENDFOR
 \end{algorithmic}
-\end{center}
 
 \vskip .5cm
 \includegraphics[width=.95\textwidth]{../graphs/mcycle}   
@@ -252,7 +250,35 @@ Our statistic of interest is the CART fit...
 \begin{frame}
 
 
-Given this expression of forests as a posterior, \\we can start talking about {\it variance}
+Given forests as a posterior, we can start talking about {\it variance}.
+
+\vskip .5cm
+Consider data at a given node in full-sample CART.
+
+\vskip .1cm
+Say 
+$\mu_j(x_{ij})$ is the leaf rule implied by next splitting on a given $x_j$. 
+
+\vskip .1cm
+The resulting {\it impurity is a posterior functional}:
+\begin{equation*}
+\sigma^2_j(\boldsymbol{\theta}) = \frac{1}{n}\sum_i \theta_i \left[y_i - \mu_j(x_{ij})\right]^2.
+\end{equation*}
+
+\vskip .3cm
+Say $\sigma_1(\boldsymbol{\theta})$ is the full CART split's impurity, \\and $\sigma_j(\boldsymbol{\theta})$  is that for any other location.
+
+\vskip .5cm
+Then we can derive a first order approx to $\Delta_j(\boldsymbol{\theta})   = \sigma_1^2(\boldsymbol{\theta}) - \sigma_j^2(\boldsymbol{\theta})$
+
+\vskip .2cm
+\hfill {\theme and we then have $\mathrm{p}(\Delta_j) < 0$.}
+
+\end{frame}
+
+\begin{frame}
+
+{\bf Theoretical trunk stability}
 
 \vskip .5cm
 For the data at a given node on the
@@ -343,37 +369,114 @@ Since the trunks in a full forest are all similar, EBF and BF give nearly the sa
 
 \begin{frame}
 
-EBFs work all over the place
-
-\begin{columns}
-\begin{column}{2in}
-\begin{center}
-{\bf ~~~~~beer}
-\end{center}
-
-\includegraphics[width=2in]{../graphs/beer}
-\end{column}
-
-\begin{column}{2in}
-\begin{center}
-{\bf ~~~~~~~wine}
-\end{center}
-
-\includegraphics[width=2in]{../graphs/wine}
-\end{column}
-\end{columns}
+{\bf EBFs work all over the place}
 
 \vskip .5cm
-\hfill Predicting beer choice from demographics, \\\hfill and wine rating from chemical profile
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=\textwidth]{../graphs/beer}
+\end{minipage}
+~~
+\begin{minipage}{0.4\linewidth}
+{\footnotesize
+\begin{tabular}{c c | l}
+$\overline{\text{MCR}}$  & \% WTB & \\
+\cline{1-2}\rule{0pt}{3ex} 
+0.4341 &  0.0 & BF \\
+0.4531 &  4.4 & EBF \\
+0.5989 & 38.0 & SSF \\
+0.6979 & 60.8 & DT \\
+\end{tabular}}
+\end{minipage}
+
+\vskip .5cm
+\hfill Predicting beer choice from demographics
+
+\end{frame}
+
+\begin{frame}
+
+{\bf EBFs work all over the place}
+
+\vskip .5cm
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=\textwidth]{../graphs/wine}
+\end{minipage}
+~~
+\begin{minipage}{0.4\linewidth}
+{\footnotesize
+\begin{tabular}{c c | l}
+$\overline{\text{RMSE}}$  & \% WTB & \\
+\cline{1-2}\rule{0pt}{3ex} 
+0.5905 &  0.0 & BF \\
+0.5953 &  0.8 & EBF \\
+0.6607 & 11.9 & SSF \\
+0.7648 & 29.5 & DT \\
+\end{tabular}}
+\end{minipage}
+
+\vskip .5cm
+\hfill or wine rating from chemical profile
+
+\end{frame}
+
+\begin{frame}
+
+{\bf Choosing the trunk depth}
+
+
+\vskip .5cm
+Distributed computing perspective: {\theme fix only as deep as you must!}
+
+\vskip .75cm
+{\small
+\begin{tabular}{c | c c c | c c c | c c c}
+& \multicolumn{3}{l|}{CA housing} & \multicolumn{3}{l|}{Wine} &\multicolumn{3}{l}{Beer} \\
+\cline{2-10} \rule{0pt}{3ex} 
+\!\!\!\!\!\!{\it Min Leaf Size in $10^3$} & 6 & 3 & 1.5 & 2  & 1 & 0.5 & 20 & 10 & 5\\
+\!\!\!\!\!\!{\it \% Worse Than Best} & \!1.6 & \!2.4 & \!4.3 & \!0.3 & \!0.8 & \!2.2 & \!1.0 & \!4.4 & \!7.6 
+\end{tabular}}
+
+\vskip .75cm
+Still, open questions.  e.g., more trees vs shallower trunk?
+
+\vskip .2cm
+No rigorous answer yet... maybe it's in the npB framework.
+
+
 \end{frame}
 
 \begin{frame}
 
 
-{\bf \theme EBFs at eBay: \bk predicting Bad Buyer Experiences}
+{\bf \theme EBFs at EBay: \bk predicting Bad Buyer Experiences}
 
-\vskip .25cm
+\vskip .5cm
+A BBE could be receiving something that is `significantly not as described',
+or shipping delays, or any of many other problems.
 
+\vskip .5cm
+The models are updated frequently, and  information\\ about $\mathrm{p}(\text{BBE})$
+is an input to search rankings  and more.
+
+\vskip .5cm
+{\nv Big Data axiom}: more data beats fancy model.
+
+\vskip .2cm The best thing to improve predictions is more data.  \\With millions of daily transactions, there's little limit on data.
+
+\end{frame}
+
+\begin{frame}
+
+{\bf EBFs at EBay}
+
+\vskip .5cm
+Full random forest runs take too long on full data \\(even using distributed tree algorithms).
+
+\vskip .5cm
+Subsampling led to a noticeable and big drop in performance.
+
+\vskip .5cm
+So: EBFs!
 \begin{itemize}
 \item trunk can be fit in distribution using Spark \texttt{MLLib}.
 \item this trunk  acts as a sorting function to map observations \\to 
@@ -381,12 +484,24 @@ separate locations corresponding to each branch.
 \item Forests are then fit on a machine for each branch.  
 \end{itemize}
 
+\end{frame}
+
+\begin{frame}
+
+{\bf EBFs at EBay}
+
 \vskip .5cm
 
-On 12 million transactions,  EBF with 32 branches yields a 1.3\% drop in misclassification over the SSF alternatives.  
+On 12 million transactions,  EBF with 32 branches yields a\\ 1.3\% drop in misclassification over the SSF alternatives.  
 
 \vskip .5cm
 This amounts to more than 20,000 extra detected \\BBE occurrences over this short time window.
+
+\vskip .5cm 
+Putting it into production requires some careful engineering, \\but this really is {\it a very simple algorithm}.  
+
+\vskip .5cm
+If you already fit RFs and are hitting time/space constraints,\\ then an EBF is lots of gain for little pain.
 
 \end{frame}
 

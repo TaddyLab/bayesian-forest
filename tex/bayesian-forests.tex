@@ -25,28 +25,29 @@
 \icmladdress{University of Chicago Booth School of Business}
 \icmlauthor{Chun-Sheng Chen}{chunschen@ebay.com}
 \icmladdress{eBay}
-\icmlauthor{Jun Yun}{junyu@ebay.com}
+\icmlauthor{Jun Yu}{junyu@ebay.com}
 \icmladdress{eBay}
 \icmlauthor{Mitch Wyle}{mwyle@ebay.com}
 \icmladdress{eBay}
 
 
-\icmlkeywords{decision trees, random forests, CART, nonparametric Bayesian, ensemble learning, big data, distributed computing, spark}
+\icmlkeywords{decision trees, random forests, CART, 
+nonparametric Bayesian, ensemble learning, 
+big data, distributed computing, spark}
 
 \vskip 0.3in
 ]
 
 \begin{abstract} 
-We derive ensembles of decision trees through
-a nonparametric Bayesian model, allowing us to
-view random forests as samples from a posterior distribution. This insight motivates a class
-of Bayesian forest (BF) algorithms that yield
-small gains in performance and large gains in
-interpretability. Based on the BF framework,
-we are able to show that high-level tree hierarchy is stable in large samples. This leads to an
-empirical Bayesian forest (EBF) algorithm for
-building approximate BFs on massive distributed
-datasets and we show that EBFs outperform sub-sampling based alternatives by a large margin.
+We derive ensembles of decision trees through a nonparametric Bayesian model,
+allowing us to view random forests as samples from a posterior distribution.
+This insight provides large gains in interpretability, and motivates a class
+of Bayesian forest (BF) algorithms that yield small but reliable performance
+gains. Based on the BF framework, we are able to show that high-level tree
+hierarchy is stable in large samples. This leads to an empirical Bayesian
+forest (EBF) algorithm for building approximate BFs on massive distributed
+datasets and we show that EBFs outperform sub-sampling based alternatives by a
+large margin.
 \end{abstract} 
 
 \section{Introduction}\label{introduction}
@@ -54,7 +55,7 @@ datasets and we show that EBFs outperform sub-sampling based alternatives by a l
 Decision trees are a fundamental machine learning tool. They partition the
 feature (input) space into regions of response homogeneity, such that the
 response (output) value associated with any point in a given partition can be
-predicted from the average for that of neighbors. The classification and
+predicted from the average for that of its neighbors. The classification and
 regression tree (CART) algorithm of \cite{breiman_classification_1984} is a
 common recipe for building trees; it grows greedily through a series of
 partitions on features, each of which maximizes reduction in some measure of
@@ -72,59 +73,59 @@ decision tree ensembles (or, \textit{forests}).
 
 
 \textit{Bayesian forest:}  A nonparametric Bayesian (npB) point-of-view
-allows for the straightforward, but not well-recognized, interpretation of
-forests as a sample from a posterior over trees. Imagine CART applied to a
-data generating process (DGP) with finite support: the tree greedily splits
-support to minimize impurity of the partitioned response distributions
-(terminating at some minimum-leaf-probability threshold). We present a
-nonparametric Bayesian model for DGPs based on multinomial draws from
-(large) finite support, and derive the Bayesian forest (BF) algorithm for
-sampling from the distribution of CART trees implied by the posterior over
-DGPs.  Random forests are an approximation to this BF exact posterior sampler,
-and we show in examples that BFs provide a small but reliable gain in
-predictive performance over RFs.
+allows interpretation of forests as a sample from a posterior over trees.
+Imagine CART applied to a data generating process (DGP) with finite support:
+the tree greedily splits support to minimize impurity of the partitioned
+response distributions (terminating at some minimum-leaf-probability
+threshold). We present a nonparametric Bayesian model for DGPs based on
+multinomial draws from (large) finite support, and derive the Bayesian forest
+(BF) algorithm for sampling from the distribution of CART trees implied by the
+posterior over DGPs.  Random forests are an approximation to this BF exact
+posterior sampler, and we show in examples that BFs provide a small but
+reliable gain in predictive performance over RFs.
 
 \textit{Posterior tree variability:} Based upon this npB framework, we derive
-results on the approximate stability of CART  over different DGP realizations.
-In particular, we find that, for the data at a given node on the
-sample CART tree, the probability that the next split for a posterior
-DGP realization  matches the sample split location is
+results on the stability of CART  over different DGP realizations. We find
+that, conditional on the data allocated to a given node on the sample CART tree,
+the probability that the next split for a posterior DGP realization  matches
+the observed full-sample CART split is
 \begin{equation}\label{treestable}
 \mathrm{p}\left(\text{split matches sample CART}\right) \gtrsim 1 - \frac{p}{\sqrt{n}} e^{-n},
 \end{equation}
-where $p$ is the number of possible split locations and $n$ the number of observations on the current node.  Even if $p$ grows with $n$, the result indicates that partitioning can be stable conditional on the data being split.  This conditioning is key: CART's well known instability is due to its recursive nature, such that a single split different from sample CART at some node removes any expectation of similarity  below that node.  However, for  large samples, (\ref{treestable}) implies that we will see little variation at the top hierarchy of  trees in a forest.  We illustrate such stability in our examples.
+where $p$ is the number of possible split locations and $n$ the number of observations on the  node.  Even if $p$ grows with $n$, the result indicates that partitioning can be stable conditional on the data being split.  This conditioning is key: CART's well known instability is due to its recursive nature, such that a single split different from sample CART at some node removes any expectation of similarity  below that node.  However, for  large samples, (\ref{treestable}) implies that we will see little variation at the top hierarchy of  trees in a forest.  We illustrate such stability in our examples.
 
 
-\textit{Empirical Bayesian forests for Big Data:} the npB forest
+\textit{Empirical Bayesian forests:} the npB forest
 interpretation and tree-stability results lead us to propose empirical
 Bayesian forests (EBF) as an algorithm for building approximate BFs on massive
-distributed datasets (e.g., those stored on a Hadoop distributed file system).
+distributed datasets.% (e.g., those stored on a Hadoop distributed file system).
 Traditional empirical Bayesian analysis fixes parameters in high levels of a
-hierarchical model at their marginal posterior mode, and proceeds to quantify
-uncertainty for the rest of the model conditional upon these fixed values.
+hierarchical model at their marginal posterior mode, and quantifies
+uncertainty for the rest of the model conditional upon these fixed estimates.
 EBFs work the same way: we fit a single shallow CART \textit{trunk} to the
 sample data, and then sample a BF ensemble of \textit{branches} at each
 terminal node of this trunk.  The initial CART trunk thus maps observations to
-their branch, and each branch BF can be fit in parallel without any
-communication with the other branches.  When we expect little posterior
+their branch, and each branch BF is fit in parallel without any
+communication with the other branches.  With little posterior
 variability about the trunk structure, an EBF sample should look similar to
 the (much more costly, or even infeasible) full BF sample.  In a number of
 experiments, we compare EBFs to the common distributed-computing strategy of
-fitting forests to random data subsets, and find that the EBFs lead to a large
-improvement in predictive performance.
+fitting forests to data subsamples and find that the EBFs lead to a large
+improvement in predictive performance.  This type of strategy is 
+key to efficient machine learning with Big Data: focus the `Big' on the pieces
+of models that are most difficult to learn.
 
 
 
-BFs offer small performance advantages over RFs, but their main usefulness is
-as a Bayesian interpretation for ensembles of CART trees. The intuition gained
-is especially valuable because there is little frequentest theory available on
-inference for decision trees.  The BF model also motivates the more practical
-contribution of EBFs, leading to new algorithms for distributed computing and
-cost savings from avoiding repeatedly sampling model levels about which you
-have little uncertainty. This type of strategy is the key to efficient machine
-learning with Big Data: focus the `Big' on the pieces of models that are most
-difficult to learn.
 
+% Our Bayesian nonparametric setup -- treating CART fit as a statistic and
+% assessing its uncertainty under a prior for the DGP -- provides a new
+% interpretation of forest classifiers and regressors.  The intuition gained
+% here is especially valuable because there is little frequentest theory
+% available on inference for decision trees.  Our npB framework also motivates
+% the practically important contribution of EBFs, leading to new algorithms for
+% distributed computing and cost savings from avoiding repeatedly sampling model
+% levels about which you have little uncertainty. T
 
 Bayesian forests are introduced in Section 2 along with a survey
 of  Bayesian tree models, Section 3  investigates tree stability in
@@ -139,7 +140,7 @@ eBay.com.
 
 \section{Bayesian forests}\label{bayesian-forests}
 
-Informally, write $dgp$ to represent the stochastic process defined over an as-of-yet undefined set of possible DGPs.
+Informally, write $dgp$ to represent the stochastic process defined over a set of possible DGPs.
 A Bayesian analogue to classical `distribution-free' nonparametric
 statistical analysis \citep[e.g.,][]{hollander_nonparametric_1999} has two components:
 \begin{enumerate}
@@ -149,6 +150,13 @@ statistical analysis \citep[e.g.,][]{hollander_nonparametric_1999} has two compo
 In  the context of this article, $\mathcal{T}(dgp)$ refers to a CART tree.   Indeed, trees are useful precisely because they are good predictors regardless of the underlying data distribution -- they do not rely upon distributional assumptions to share information across training observations. 
 Our DGP model, detailed below, leads to a posterior for $dgp$ that is represented through random weighting of observed support.  A Bayesian forest contains CART fits corresponding to each draw of support weights, and the BF ensemble prediction is an approximate posterior mean.
 
+
+
+\begin{figure*}
+\includegraphics[width=\textwidth]{../graphs/mcycle}   
+\caption{\label{mcycle} Motorcycle data illustration.  The lines show each of CART fit to the data sample, CART fit to a sample with weights drawn IID from an exponential (point size proportional to weight), and the BF predictor which averages over 100 weighted CART fits.} 
+\end{figure*}    
+
 \subsection{Nonparametric model for the DGP}\label{dgpmodel}
 
 We employ a Dirichlet-multinomial sampling model in nonparametric
@@ -156,8 +164,7 @@ Bayesian analysis. The approach dates back to
 \citet{ferguson_bayesian_1973}. \citet{chamberlain_nonparametric_2003}
 provide an overview in the context of econometric problems.
 \citet{rubin_bayesian_1981} proposed the Bayesian bootstrap as an
-algorithm for sampling from versions of the posterior implied by this
-strategy, and the algorithm has since become closely associated with
+algorithm for sampling from versions of the implied posterior, and it has since become closely associated with
 this model.
 
 Use $\mathbf{z}_i = \{\mathbf{x}_i,y_i\}$ to denote the  features
@@ -166,12 +173,11 @@ and response  for observation $i$. We suppose that data are drawn
 \begin{equation}\label{dgpeq}
 dgp = \mathrm{p}(\mathbf{z}) = \sum_{l=1}^L \omega_l \mathds{1}_{[\mathbf{z} = \boldsymbol{\zeta}_l]}
 \end{equation}
-where $\omega_l\geq0\forall l$ and $\sum_l \omega_l = 1$. Thus the
-generating process for observation $i$ draws $l_i$ from a multinomial
-with probability $\omega_{l_i}$, and this indexes one of the $L$ support
-points. Since $L$ can be arbitrarily large, and all data are stored as
-discrete, this so-far implies no restrictive
-assumptions beyond that of independence.
+where $\omega_l\geq0\forall l$ and $\sum_l \omega_l = 1$. Thus the generating
+process for observation $i$ draws $l_i$ from a multinomial with probability
+$\omega_{l_i}$, and this indexes one of the $L$ support points. Since $L$ can
+be arbitrarily large, this so-far implies no restrictive assumptions beyond
+that of independence.
 
 The conjugate prior for $\boldsymbol{\omega}$ is a Dirichlet
 distribution, written
@@ -208,6 +214,7 @@ on the $\boldsymbol{\omega} = [\omega_1 \dots \omega_n]'$ sampling
 probabilities.  We will also find it convenient to parametrize un-normalized $\boldsymbol{\omega}$ via
 IID exponential random variables: $\boldsymbol{\theta} = [\theta_1 \dots \theta_n]$, where $\theta_i \stackrel{ind}{\sim} \mathrm{Exp}(1)$ in the posterior and $\omega_i = \theta_i/|\boldsymbol{\theta}|$ with $|\boldsymbol{\theta}| = \sum_i \theta_i$.
 
+
 \subsection{CART as posterior functional}
 
 Conditional upon $\boldsymbol{\theta}$, the population tree
@@ -222,15 +229,15 @@ weighted-squared error
 \begin{equation}
 \mathcal{I}(\mathbf{y}^\eta) = \sum_{i\in \eta} \theta_i (y_i - \mu_\eta )^2
 \end{equation}
-with $\mu_\eta = \sum_i \theta_i y_i/|\boldsymbol{\theta}^\eta|$. The split
-candidates are restricted to satisfy a minimum leaf probability, such that
-every node in the tree must have  $|\boldsymbol{\theta}^\eta|$ greater than
-some threshold.\footnote{In practice this can be replaced with a threshold on
-the minimum number of observations at each leaf.}   This  procedure is
-repeated on every currently-terminal tree node until it is no longer possible
-to split while satisfying the minimum probability threshold. To simplify
-notation, we refer to the resulting CART tree as
-$\mathcal{T}(\boldsymbol{\theta})$.
+with $\mu_\eta = \sum_i \theta_i y_i/|\boldsymbol{\theta}^\eta|$.   For our
+classification trees, we minimize Gini impurity.  The split candidates are
+restricted to satisfy a minimum leaf probability, such that every node in the
+tree must have  $|\boldsymbol{\theta}^\eta|$ greater than some
+threshold.\footnote{In practice this can be replaced with a threshold on the
+minimum number of observations at each leaf.}   This  procedure is repeated on
+every currently-terminal tree node until it is no longer possible to split
+while satisfying the minimum probability threshold. To simplify notation, we
+refer to the resulting CART tree as $\mathcal{T}(\boldsymbol{\theta})$.
 
 
 
@@ -239,10 +246,10 @@ $\mathcal{T}(\boldsymbol{\theta})$.
 
 
 
-Following \cite{rubin_bayesian_1981} we can obtain a sample from the
-posterior on $\mathcal{T}(\boldsymbol{\theta})$ through a simple
-Bayesian bootstrap. 
-\begin{algorithm}[h]
+Following \cite{rubin_bayesian_1981} we can  sample from the
+posterior on $\mathcal{T}(\boldsymbol{\theta})$ via the 
+Bayesian bootstrap in Algorithm 1. 
+\begin{algorithm}[ht]
    \caption{Bayesian Forest}
    \label{alg:bf}
 \begin{algorithmic}
@@ -254,14 +261,8 @@ Bayesian bootstrap.
 \end{algorithm}
 
    We've implemented  BF through simple adjustment of the
-\texttt{ensemble} module of python's \texttt{scikit-learn} \citep{scikit-learn}.\footnote{Replace the variable \texttt{sample\_counts} in \texttt{forest.py}  to be
-drawn exponential rather than binomial when bootstrapping.}  As a quick illustration, Figure \ref{mcycle} shows three fits for the conditional mean  velocity of a motorcyle helmet after  impact in a crash: sample CART $\mathcal{T}(\mathbf{1})$, a single draw of $\mathcal{T}(\boldsymbol{\theta})$, and the BF average prediction \citep[data are from the MASS R package,][]{mass}.
-
-
-\begin{figure*}
-\includegraphics[width=\textwidth]{../graphs/mcycle}   
-\caption{\label{mcycle} Motorcycle data illustration.  The lines show each of CART fit to the data sample, CART fit to a sample with weights drawn IID from an exponential (point size proportional to weight), and the BF predictor which averages over 100 weighted CART fits.} 
-\end{figure*}    
+\texttt{ensemble} module of python's \texttt{scikit-learn} \citep{scikit-learn}.\footnote{Replace  variable \texttt{sample\_counts} in \texttt{forest.py}  to be
+drawn exponential rather than multinomial when bootstrapping.}  As a quick illustration, Figure \ref{mcycle} shows three fits for the conditional mean  velocity of a motorcyle helmet after  impact in a crash: sample CART $\mathcal{T}(\mathbf{1})$, a single draw of $\mathcal{T}(\boldsymbol{\theta})$, and the BF average prediction \citep[data are from the MASS R package,][]{mass}.
 
 Note that the Bayesian forest differs from Breiman's random
 forest only in that the weights are drawn from an exponential (or Dirichlet, when normalized) distribution
@@ -285,31 +286,25 @@ The original Bayesian tree model is the Bayesian CART (BCART) of
 BCART defines a likelihood where response values for  observations  allocated
 (via $\mathbf{x}$) to the same leaf node are IID from some parametric family
 (e.g., for regression trees, observations in each leaf are IID Gaussian with
-shared variance and mean).   BCART is fit through Markov chain Monte Carlo (MCMC), drawing from the
-tree posterior by proposing a number of possible
-changes to current tree fit (e.g.~grow or prune a given leaf node). A natural
-extension of this framework is to consider alternative leaf models. The  BCART
-authors propose linear regression leaves, while the Treed Gaussian
-Processes (TGP) of \citet{gramacy_bayesian_2008} use Gaussian process
-regression at each leaf. As an alternative to MCMC,
-\citet{taddy_dynamic_2011} proposed dynamic regression trees (dynaTree)
-fit through sequential Monte Carlo (SMC), allowing trees to grow naturally
-with streaming data through small updates to a particle cloud of
-trees.\footnote{Note that the Bayesian bootstrap is also a potential sampling
-tool in this tree-as-parameter setting. See \citet{clyde_bagging_2001} for
-details on the technique and its relation to model averaging.}
+shared variance and mean).  The  BCART authors also propose linear regression
+leaves, while the Treed Gaussian Processes  of
+\citet{gramacy_bayesian_2008} use Gaussian process regression at each leaf.
+The models are fit via Markov chain Monte Carlo (above examples) or sequential Monte Carlo \citep{taddy_dynamic_2011} algorithms that draw from the posterior by
+proposing small changes to the tree (e.g.,~grow or prune).\footnote{The Bayesian bootstrap
+is also a potential sampling tool in this tree-as-parameter setting. See
+\citet{clyde_bagging_2001} for details on the technique and its relation to
+model averaging.}
 
-MCMC and SMC tree sampling use the same incremental moves that are familiar
-from CART. Unfortunately, this means that they tend to get stuck in
-locally-optimal regions of tree-space.  As an alternative,
-the original BCART authors developed the Bayesian Additive Regression Trees
-\citep[BART;][]{chipman_bart:_2010} algorithm, which replaces a single tree
-parameter target with the sum of many small trees. An input vector is
-allocated to a leaf in each  tree, and the corresponding response
-distribution has mean equal to the average of each leaf node value and
-variance equal to a single  value that is shared across observations. Original
-BART assumes Gaussian response, and extensions include Gaussian mixtures. Since BART
-only ever samples very short trees, MCMC is fast and mixes well.  
+Monte Carlo tree sampling use the same incremental moves that employed in
+ CART. Unfortunately, this means that they tend to get stuck in
+ locally-optimal regions of tree-space.  Bayesian Additive Regression Trees
+\citep[BART;][]{chipman_bart:_2010}  replace a single tree with the sum of
+many small trees. An input vector is allocated to a leaf in each  tree, and
+the corresponding response distribution has mean equal to the average of each
+leaf node value and  variance shared across
+observations. Original BART has Gaussian errors, and extensions include
+Gaussian mixtures. Since BART only  samples  short trees, it is fast
+and mixes well.
 
 Easy
 sampling comes at a potentially steep price: the assumption of homoskedastic
@@ -332,11 +327,12 @@ measured (e.g., clicks or dollars) and  need to build a predictor that does
 well on that scale.
 
 
-\begin{figure}
-\includegraphics[width=0.475\textwidth]{../graphs/fried}
-\caption{Friedman experiment predictive RMSE over 100 runs.}
-\end{figure}
 
+\begin{figure}
+~\includegraphics[width=0.45\textwidth]{../graphs/fried}
+\vskip -.25cm
+\caption{\label{friedpic}Friedman experiment predictive RMSE over 100 runs.}
+\end{figure}
 
 \subsection{Friedman example}\label{friedman-example}
 
@@ -361,7 +357,7 @@ random draws from (\ref{friedfun}) and tested at 1000 new $\mathbf{x}$
 locations. Root mean square error (RMSE) is
 calculated between predicted and true $f(\mathbf{x})$.
 
-Results over 100 repeats are shown in  Figure \ref{friedfun}.\footnote{In this and the next example, CART-based algorithms had minimum-leaf-samples set at 3 and the ensembles contain 100 trees.  BART and BCART run at their \texttt{bayestree} and \texttt{tgp} R package defaults, except that BART draws only 200 trees after a burn-in of 100 MCMC iterations.  This is done to get comparable compute times; for these settings BART requires around 75 seconds per fold with the California housing data, compared to BF's 10 seconds when run in serial, and 3 seconds running on 4 cores.}
+Results over 100 repeats are shown in  Figure \ref{friedpic}.\footnote{In this and the next example, CART-based algorithms had minimum-leaf-samples set at 3 and the ensembles contain 100 trees.  BART and BCART run at their \texttt{bayestree} and \texttt{tgp} R package defaults, except that BART draws only 200 trees after a burn-in of 100 MCMC iterations.  This is done to get comparable compute times; for these settings BART requires around 75 seconds per fold with the California housing data, compared to BF's 10 seconds when run in serial, and 3 seconds running on 4 cores.}
 As forecast, the only model which assumes the true homoskedastic error
 structure, BART, well outperforms all others. The two forests, BF and
 RF, are both a large improvement over DT. 
@@ -401,7 +397,7 @@ restrictive error model.   BF again offers a small
 gain over RF.   Since the larger sample size makes observed support a better approximation to population support,  the forests outperform ET.  The EBF (empirical Bayesian forest) and SSF (sub-sample forest) predictors are based on distributed computing algorithms that we introduce later in Section 3.  At this point we note only that the massively scalable EBF is amongst the top performers; the next section helps explain why.
 
 
-\begin{table}[h]\hspace{-.25cm}
+\begin{table}
 {\footnotesize
 \begin{tabular}{r|c c c c c c c}
 &BF  &  RF &   EBF &  ET &   SSF &  BART & DT %&BCART 
@@ -420,33 +416,31 @@ RMSE &  48.2 &   48.5 &   49.4 &   52.5 &   53.1 &   54.8 &   65.6   %&82.7
 
 
 Theory on decision trees is sparse. The original CART book of
-\citet{breiman_classification_1984} provides results on asymptotic consistency;
-they show that any partitioner that is able to eventually learn enough to
-split the DGP support into very small probability leaves will be able to
+\citet{breiman_classification_1984} provides consistency results;
+they show that any partitioner that is able to learn enough to
+split the DGP support into very low probability leaves will be able to
 reproduce the conditional response distribution of that DGP. However, this
 result says nothing about the structure of the underlying trees, nor does it
 say anything about the ability of a tree to predict when there is not enough
-data to finely partition the DGP.  Others have focused on the frequentest
-properties of individual split decisions. In the original CHAID work of
+data to finely partition the DGP.  Others have focused on the frequentist
+properties of individual split decisions. In the  CHAID work of
 \citet{kass_exploratory_1980}, splits are based upon $\chi^2$ tests at each
 leaf node. \citet{loh_regression_2002} and
-\citet{hothorn_unbiased_2006} are example generalizations, both of which
-combat the multiple testing and other biases inherent in
-tree-building through a sequence of hypothesis tests. However, such
-contributions provide little intuition about the variability of an
-entire decision tree or in the setting where we are not working from a
-no-split null hypothesis distribution.
+\citet{hothorn_unbiased_2006} are generalizations, both of which
+combat multiple testing and other biases inherent in tree-building through a
+sequence of hypothesis tests. However, such contributions provide little
+intuition  in the setting where we are not working from a no-split null
+hypothesis distribution.
 
-Despite this lack of theory, it is generally accepted that in practice there is
-usually  large  uncertainty (sampling or posterior) about the
-structure of decision trees. For example, \citet{geurts_investigation_2000}
-present extensive simulation of tree
-uncertainty. They find that the location and order of split points in
-trees is sometimes no-better than random (this motivates work by the
-same authors on extremely randomized trees). The intuition behind such randomness
-is clear: the probability of a tree having any given branch structure is the
-product of conditional probabilities for each successive split. After a enough
-steps, any specific tree approaches probability of zero. 
+Despite this lack of theory, it is generally thought that there is large
+  uncertainty (sampling or posterior) about the structure of decision trees.
+  For example, \citet{geurts_investigation_2000} present extensive simulation
+  of tree uncertainty and find that the location and order of splits
+  is often no-better than random (this motivates work by the same
+  authors on extremely randomized trees). The intuition behind such randomness
+  is clear: the probability of a tree having any given branch structure is the
+  product of conditional probabilities for each successive split. After 
+  enough steps, any specific tree approaches probability of zero.
 
 However, it is possible that elements of the tree structure are
  stable. For example, in the context of boosting,
@@ -460,15 +454,6 @@ We make the point first in theory, then through empirical demonstration.
 \subsection{Probability of the sample CART
 tree}\label{probability-of-the-sample-cart-tree}
 
-
-
-\begin{figure*}
-~~~
-\includegraphics[width=0.6\textwidth]{../graphs/ca_trunk}
-~~~~~~
-\includegraphics[width=0.31\textwidth]{../graphs/ca_splits}
-\caption{\label{calistable} California housing data.  The left shows the CART fit  on unweighted data with a minimum of 3500 samples-per-leaf. The right panel shows the distribution of first and second split locations -- always on median income  -- across 100 draws from the BF posterior. }
-\end{figure*}
 
 We focus on regression trees for this derivation, wherein node impurity is
 measured as the sum of squared errors. Consider a simplified setup
@@ -507,7 +492,7 @@ The Taylor approximation is then
 \end{align} with
 $\bar y_j(0) = \frac{1}{n_{\texttt{f}_j}}\sum_{i \in \texttt{f}_j}y_i$
 and
-$\bar y_j(t) = \frac{1}{n_{\texttt{t}_j}}\sum_{i \in \texttt{t}_j}y_i$
+$\bar y_j(1) = \frac{1}{n_{\texttt{t}_j}}\sum_{i \in \texttt{t}_j}y_i$
  the observed response averages in each partition.
 
     Suppose that
@@ -576,6 +561,15 @@ The next section shows this to be the case in practice.
 
 
 
+\begin{figure*}
+~~~
+\includegraphics[width=0.6\textwidth]{../graphs/ca_trunk}
+~~~~~~
+\includegraphics[width=0.31\textwidth]{../graphs/ca_splits}
+\caption{\label{calistable} California housing data.  The left shows the CART fit  on unweighted data with a minimum of 3500 samples-per-leaf. The right panel shows the distribution of first and second split locations -- always on median income  -- across 100 draws from the BF posterior. }
+\end{figure*}
+
+
 \subsection{Trunk stability in California}\label{stability-in-california}
 
 
@@ -589,7 +583,7 @@ just north of Santa Barbara).
 
 To investigate tree uncertainty, we can apply the BF algorithm and repeatedly fit similar CART trees to randomly-weighted data.  Running a 100 tree BF, we find that the sample tree occurs 62\% of the time.  The second most common tree, occurring 28\% of the time, differs only in that it splits on median income again instead of on housing median age.  Thus 90\% of the posterior weight is on trees that split on income twice, and then latitude.  Moreover, a striking 100\% of trees have first two splits on median income.  From this, we can produce the plot in the right panel of Figure \ref{calistable} showing the locations of these first two splits: each split-location posterior is tightly concentrated around the corresponding sample CART split.
 
-Given such trunk stability after only 20k observations, we have hope for much deeper tree stability under the 1-100 million+ observation datasets encountered when analyzing internet transaction data.  
+% Given such trunk stability after only 20k observations, we have hope for much deeper tree stability under the 1-100 million+ observation datasets encountered when analyzing internet transaction data.  
 
 \section{Empirical Bayesian forests}
 
@@ -616,7 +610,7 @@ structure below. Finally, Section 3 demonstrated that, like high levels in a par
 
 An empirical Bayesian forest (EBF) takes advantage of this structure by fixing
 the highest levels in the hierarchy -- the earliest CART splits -- at a single
-estimate of high posterior probability. We fit a single
+estimate of high posterior probability.\footnote{These earliest splits -- requiring impurity search over large observation sets -- are also the most expensive to optimzie.} We fit a single
 shallow CART \textit{trunk} to the unweighted sample data, and  sample a
 BF ensemble of \textit{branches} at each terminal node of this trunk.  The
 initial CART trunk  maps observations to their branch, and each branch BF
@@ -635,22 +629,25 @@ SSF is a commonly applied strategy \citep[e.g., see mention, but not recommendat
 
  
 In the California housing  experiment of Figure \ref{calihist}
-and Table \ref{calistable}, EBF\footnote{EBFs use five node trunks  in this Section.  The SSFs are fit on data split into five equally sized subsets.} predictions are only 2\% worse than those from the full BF.  In contrast, SSF predictions are 10\% worse.
+and Table \ref{calitab}, EBF\footnote{EBFs use five node trunks  in this Section.  The SSFs are fit on data split into five equally sized subsets.} predictions are only 2\% worse than those from the full BF.  In contrast, SSF predictions are 10\% worse.
 
 We consider two additional prediction problems.  The first example, 
 taken from \cite{CorCer09}, involves prediction of an `expert' quality ranking on
 the scale of 0-10 for wine based upon 11 continuous attributes (physiochemical properties of the wine) plus
 wine color (red or white).  There are 4898 observations.  Results are in Figure \ref{wine}:  EBF is only 1\% worse than the full BF, while SSF is 12\% worse.
 
-The second example is from the Nielson Consumer Panel data,
-%, available for academic research through the Kilts Center at Chicago Booth (research.chicagobooth.edu/nielsen).
-and our sample contains 73,128 purchases of light beer in a number of US
-markets  during 2004. The response of interest is brand choice, of a
-possible five major light beer labels:
-Budweiser, Miller, Coors, Natural, and Busch. 
-Each purchase is associated with a household that is codified through
-16 standard demographic categorical variables (maximum age, total income, main
-occupation, etc).  Applying classification forests and DTs (based on Gini impurity) leads to the results in Figure \ref{beer}:  EBF is only 4.4\% worse than the BF, while  SSF is 38\% worse.
+The second example is from the Nielson Consumer Panel data, available for
+academic research through the Kilts Center at Chicago Booth,
+%(\texttt{research.chicagobooth.edu/nielsen})
+ and our sample contains 73,128 purchases
+of light beer in a number of US markets  during 2004. The response of interest
+is brand choice, of a possible five major light beer labels: Budweiser,
+Miller, Coors, Natural, and Busch. Each purchase is associated with a
+household that is codified through 16 standard demographic categorical
+variables (maximum age, total income, main occupation, etc).  Applying
+classification forests and DTs (based on Gini impurity) leads to the results
+in Figure \ref{beer}:  EBF is only 4.4\% worse than the BF, while  SSF is 38\%
+worse.
 
 \begin{figure}
 \begin{minipage}{0.5\linewidth}
@@ -691,12 +688,35 @@ $\overline{\text{MCR}}$  & \% WTB & \\
 \caption{\label{beer} Beer Data: 10-fold OOS prediction experiment Miss-Classification Rate and \% Worse than Best for the average MCR. }
 \end{figure}
 
-\subsection{Scaling for Big Data}
+\subsection{Choosing the trunk depth}
 
-To close, we note that this work is motivated by the need for reliable forest fitting algorithms that can be deployed on millions or hundreds of millions of observations, as encountered when analyzing internet commerce data.  A number of additional engineering details are required for such deployment, but the basic approach is straightforward:  an initial trunk is fit (possibly to a data subset)\footnote{Note that the original trunk fit can itself be fit in distribution, e.g. using the \texttt{MLLib} library for Apache Spark.}, and this trunk  acts as a sorting function to map observations to 
+From the distributed computing perspective which motivates this work, you should fix the trunk only as deep as you must.  In our full scale applications (next section), this means setting branch size so that the working memory required to fit a forest at each branch is slightly less than the memory available on each machine.
+
+This leaves open questions, e.g., on the trade-off between
+number of trees in the forest and depth of the trunk.  We don't yet have
+rigorous answers, but the npB framework can help in further
+investigation. In the interim, Table \ref{msltab} shows the effect on OOS
+error from doubling and halving the minimum leaf size for the EBFs in our
+three examples.
+
+\begin{table}[h]
+{\footnotesize
+\begin{tabular}{c | c c c | c c c | c c c}
+& \multicolumn{3}{l|}{CA housing} & \multicolumn{3}{l|}{Wine} &\multicolumn{3}{l}{Beer} \\
+\cline{2-10} \rule{0pt}{3ex} 
+\!\!\!\!\!\!MLS $10^3$ & 6 & 3 & 1.5 & 2  & 1 & 0.5 & 20 & 10 & 5\\
+\!\!\!\!\!\!\% WTB & \!1.6 & \!2.4 & \!4.3 & \!0.3 & \!0.8 & \!2.2 & \!1.0 & \!4.4 & \!7.6 
+\end{tabular}}
+\caption{\label{msltab}\% Worse than Best on OOS error for different minimum leaf sizes (MLS) specified in thousands of observations.}
+\end{table}
+
+\section{Scaling for Big Data}
+
+
+To close, we note that this work is motivated by the need for reliable forest fitting algorithms that can be deployed on millions or hundreds of millions of observations, as encountered when analyzing internet commerce data.  A number of additional engineering details are required for such deployment, but the basic approach is straightforward:  an initial trunk is fit (possibly to a data subset)\footnote{Note that the original CART trunk can itself be fit in distribution, e.g. using the \texttt{MLLib} library for Apache Spark.}, and this trunk  acts as a sorting function to map observations to 
 separate locations corresponding to each branch.  Forests are then fit at each location (machine) for each branch.  
 
-Preliminary work at eBay.com applies EBFs for prediction of `Bad Buyer Experiences' (e.g. complaints, returns, or shipping problems) on the site.  Training on a relatively small sample of 12 million transactions, the EBF algorithm using 32 branch chunks is able to provide a 1.3\% drop in misclassification over the SSF alternatives.  This amounts to more than 20,000 extra detected BBE occurrences over the short sample window, potentially giving eBay the opportunity to contact those buyers and attempt to fix the problems or even stop them before they occur.
+Preliminary work at eBay.com applies EBFs for prediction of `Bad Buyer Experiences' (e.g. complaints, returns, or shipping problems) on the site.  Training on a relatively small sample of 12 million transactions, the EBF algorithm using 32 branch chunks is able to provide a 1.3\% drop in misclassification over the SSF alternatives.  This amounts to more than 20,000 extra detected BBE occurrences over the short sample window, potentially giving eBay the opportunity to try and stop them before they occur.
 
 \section*{Acknowledgments} 
  
