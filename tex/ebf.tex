@@ -24,6 +24,7 @@
 \newcommand{\sg}{\color{DarkSlateGray}}
 \newcommand{\nv}{\color{Navy}}
 \setbeamercolor{itemize item}{fg=gray}
+\newcommand{\sk}{\vspace{.25cm}}
 
 % common math markups
 \newcommand{\bs}[1]{\boldsymbol{#1}}
@@ -81,43 +82,42 @@ with Chun-Sheng Chen, Jun Yun, and Mitch Wyle at eBay
 
 \begin{frame}
 
-{\bf \theme Neighborhoods: \bk Parents, Siblings, Children, and Leaves}
+{\bf Decision Trees are a Regression Model}
 
-\vskip -.25cm
-\begin{columns}
+\sk
+You have inputs $\bm{x}$ {\gr (forecast, current conditions)} \\ and an output of
+interest $y$ {\gr (need for an umbrella)}.
 
-\column{1.75in}
 
-\vskip -.1cm
-\begin{equation*}~~~~
-\begin{array}{ccccc}
-& &  \hskip -1cm P(\eta) &&\\
-& & \hskip -1cm \swarrow ~~~\searrow &&\\
-&  \hskip -.5cm\eta & & \hskip -.5cm S(\eta)&\\
-& \hskip -.5cm \swarrow~~~\searrow & & &\\
-C_{l}(\eta) & & \hskip -.3cm  C_r(\eta) & &
-\end{array}
-\end{equation*}
+\sk 
+Based on previous data, the goal is to specify branches of \\ choices 
+that lead to good predictions in new scenarios.
 
-\column{2.75in}
 
-\vskip .5cm
+{In other words, you want to estimate a {\nv Tree Model}.}
 
-Every node has a {\it parent} (except root).
+
+\sk
+\bk
+Instead of linear coefficients, we need to find `{\theme decision nodes}': \\~~~split-rules defined via thresholds on some dimension of 
+$\bm{x}$.
 
 \vskip .5cm
-Nodes sharing  parents are {\it siblings}.
-
-\vskip .5cm
-Each node can have its own {\it children}.
-\end{columns}
+Nodes have a parent-child structure: every node except the root has a parent, and every node except the leaves has two children.
 
 
-\vskip .5cm
-{After descending through splits, {\nv leaf nodes} hold a
-  data subset}
+\end{frame}
 
-\vskip -.25cm
+
+\begin{frame}
+
+{\bf Decision trees are like a game of mousetrap}
+
+\vskip .25cm
+You drop your $\bm{x}$ covariates in at the top, and each decision node
+bounces you either left or right.  Finally, you end up in a {\theme leaf node} which contains the data subset defined by these decisions (splits).
+
+
 \begin{equation*}
 \begin{array}{ccccc}
 & &  \hskip -2.2cm x_i = 0 &&\\
@@ -128,44 +128,78 @@ Each node can have its own {\it children}.
 \end{array}
 \end{equation*}
 
-\vskip -.5cm
+\vskip .5cm
+The {\nv prediction rule} at each leaf (a class probability or predicted $\hat y$) is  the average of the sample $y$ values that ended up in that leaf.
+
+\end{frame}
+
+
+\begin{frame}
+
+Given a {\nv parent} set of data $\{\bm{x}_i,y_i\}_{i=1}^n$, the {\theme optimal split}
+is that location $x_{ij}$ on some dimension $j$ on some observation $i$, so that the {\nv child} sets 
+\[
+\text{\rm{left}:}~\{\bm{x}_k,y_k:~x_{kj} \leq x_{ij}\}
+\text{~~and~~\rm{right}:}~\{\bm{x}_k,y_k:~x_{kj} > x_{ij}\}
+\]
+are as homogeneous in response $y$ as possible.
+
+\vskip .5cm
+For example, we will minimize the sum of squared errors \\
+\[
+\sum_{k \in \mathrm{left}} (y_k - \bar y_{\mathrm{left}})^2 + \sum_{k \in \mathrm{right}} (y_k - \bar y_{\mathrm{right}})^2
+\]
+for {\it regression trees}, or gini impurity  for {\it classification trees} \\(e.g., the sum across children `c' of $n_{\mathrm{c}}\bar y_{\mathrm{c}}(1-\bar y_{\mathrm{c}})$ if $y\in \{0,1\}$).
+
 \end{frame}
 
 \begin{frame}
 
 
-{\bf  Estimation of Decision Trees}
+{\bf We estimate decision trees by being recursive and greedy}
 
-\vskip .5cm  We maximize data likelihood 
-   by thinking recursively: 
-
-~~~~~ \bk Split the data into two different decisions about $y$. 
-
-\hfill Take each new partition and split again.
 
 \vskip .5cm
-\bk
-{\bf \theme Growing \bk your tree  with the \theme CART \bk
-  algorithm:}
+{\nv CART} grows the tree through a sequence of splits:
 
-\begin{itemize}\bk
-\item Find the split location in $\bm{x}$ that minimizes deviance.
+\vskip .25cm
 \begin{itemize}
-\item[\gr $\bullet$] $\hat{y}_i$ or $\hat{p}_i$ change depending on whether $x_i <
-  x_{\text{split}}$.
-\end{itemize}
-\item You then grow the tree at this point
-\begin{itemize}
-\item[\gr $\bullet$]  Each new child node contains a subset of the data.
-\end{itemize}
-\item View each child as a new dataset, and try to grow again.
-\begin{itemize}
-\item[\gr $\bullet$] Stop splitting/growing when there are some fixed minimum 
-number of observations in each leaf node. 
-\end{itemize}
+\item Given any set (node) of data, you can find the {\theme optimal split} (the error minimizing split) and divide into two child sets.
+\item 
+We then look at each child set, and again find the optimal split to divide it into two homogeneous subsets.
+\item
+The children become  parents, and we look again for the optimal split on their new children (the grandchildren!).
 \end{itemize}
 
-\vskip -.25cm
+\vskip .25cm
+You stop splitting and growing when the size of the leaf nodes hits some minimum threshold (e.g., say no less than 10 obsv per leaf).
+
+\end{frame}
+
+
+
+
+\begin{frame}
+
+
+{\bf  Trees are awesome}
+
+\vskip .25cm 
+They automatically learn non-linear response functions
+\\ and will discover interactions between variables.
+
+\vskip .25cm
+Example: Motorcycle Crash Test Dummy Data
+
+\sg
+$x$ is time from impact, $y$ is acceleration on the helmet.
+
+\vspace{-1cm}
+\begin{adjustwidth}{-.3in}{}
+\includegraphics[width=4.6in]{../graphs/MCtree}
+\end{adjustwidth}
+
+\vskip -.75cm
 \end{frame}
 
 
