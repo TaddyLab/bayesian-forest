@@ -55,7 +55,7 @@
 Matt Taddy,  Chicago Booth
 
 \vskip .1cm
-with Chun-Sheng Chen, Jun Yun, and Mitch Wyle at eBay
+with Chun-Sheng Chen, Jun Yu, and Mitch Wyle at eBay
 
 
 \vfill
@@ -137,7 +137,7 @@ The {\nv prediction rule} at each leaf (a class probability or predicted $\hat y
 \begin{frame}
 
 Given a {\nv parent} set of data $\{\bm{x}_i,y_i\}_{i=1}^n$, the {\theme optimal split}
-is that location $x_{ij}$ on some dimension $j$ on some observation $i$, so that the {\nv child} sets 
+is that location $x_{ij}$ on some dimension $j$ on some observation $i$,\\ so that the {\nv child} sets 
 \[
 \text{\rm{left}:}~\{\bm{x}_k,y_k:~x_{kj} \leq x_{ij}\}
 \text{~~and~~\rm{right}:}~\{\bm{x}_k,y_k:~x_{kj} > x_{ij}\}
@@ -205,138 +205,215 @@ $x$ is time from impact, $y$ is acceleration on the helmet.
 
 \begin{frame}
 
-{\bf \theme Random Forests}
+{Unfortunately, it is tough to avoid overfit with CART:}
+
+\vskip .1cm \bk
+Deep tree structure is so unstable that optimal depth is not easily chosen via cross validation, and there's no theory to fall back on.
 
 \vskip .5cm \bk
-CART is an effective way to choose a single tree, but often there are
-many possible trees that fit the data similarly well.
+Instead, we can average over a {\nv bootstrapped} sample of trees:  
 
-
-\vskip .5cm \nv
-An alternative approach is to make use of {\nv random forests}.
-
-\bk
-\vskip .25cm
-$\bullet$ Sample $B$ subsets of the data {\tt +} variables: \\ ~~~e.g., 
-observations $1,5,20,...$ and inputs $2,10,17,...$
-
-\vskip .2cm
-$\bullet$ Fit a tree to each subset, to get $B$ fitted trees is $\mc{T}_b$.
-
-\vskip .2cm
-$\bullet$
-Average prediction across trees:
-
-\vskip .1cm
- ~~~~ -  for regression average $\ds{E}[y|\bm{x}] = \frac{1}{B}\sum_{b=1}^B \mc{T}_b(\bm{x})$.
-
- \vskip .1cm
- ~~~~ -  for classification let $\{\mc{T}_b(\bm{x})\}_{b=1}^B$ vote on $\hat y$.
-
-\vskip .25cm
-{\gr The observation resample is usually {\it with-replacement}, so that this is taking the {\it average of bootstrapped trees} (i.e., `bagging')}
-
-\end{frame}
-
-\begin{frame}
-
-{\theme \bf `distribution free' nonparametric statistics }
-
-\vskip .25cm
-1: Find some statistic that matters for your problem, \\~~~~regardless of the `data generating process' (DGP).
-
-\vskip .25cm
-2: Derive the distribution for this stat under minimal assumptions.
-
-\vskip .5cm
-For (2): say $\bm{z}_l = \{\bm{x}_l,y_l\}$ is a possible data point. Then
-\[
-\mr{p}(\bm{Z}) = \frac{1}{|\bs{\theta}|}\sum_{l=1}^L \theta_l \ds{1}{[\bm{Z} = \bm{z}_l]}
-\]
-where $L$ is a {\it large} number of possible values.
 \begin{itemize}
-\item Use sample as stand-in for the $L$  points.
-\item Bayesian  model for the $\theta_l$ weights.
-\item {\it This is essentially a bootstrap.}
+\item repeatedly re-sample the data, {\nv with-replacement}, \\to get a `jittered' dataset of $n$ observations.
+\item for each resample, {\nv fit a CART tree}.
+\item when you want to predict $y$ for some $\bm{x}$, \\take the {\nv average} prediction from this forest of trees.
 \end{itemize}
+Real structure that persists across datasets shows up in the average.  Noisy useless signals will average out to have no effect. 
 
+\sk
+{\bf \theme \hfill This is a Random Forest {\gr (RF)}}
 \end{frame}
 
-\begin{frame}[fragile]
+
+\begin{frame}
 
 
-Our statistic of interest is the CART fit...
+\begin{center}
+\includegraphics[width=.75\textwidth]{../graphs/MCtreedraw}
+\end{center}
 
-\vskip .5cm
-{\sc Bayesian Forest}
-\begin{algorithmic}
-   \FOR{$b=1$ {\bfseries to} $B$}
-   \STATE draw $\boldsymbol{\theta}^b \stackrel{iid}{\sim} \mathrm{Exp}(\mathbf{1})$
-   \STATE run weighted-sample CART to get $\mathcal{T}_b = \mathcal{T}(\boldsymbol{\theta}^b)$
-   \ENDFOR
-\end{algorithmic}
+\vskip -.25cm
+Fitting CART to sampled-with-replacement data is equivalent to randomly {\nv weighting} your observations in the deviance calculations. 
 
-\vskip .5cm
-\includegraphics[width=.95\textwidth]{../graphs/mcycle}   
+\hfill {\gr (size proportional to weight in this picture)}.
 
 \end{frame}
 
 \begin{frame}
 
+{\bf \theme Random Trees \bk for the Motorcycle Data}
 
-Given forests as a posterior, we can start talking about {\it variance}.
 
-\vskip .5cm
-Consider data at a given node in full-sample CART.
+\vspace{-1cm}
+\includegraphics[width=4.25in]{../graphs/MCparticles}
 
-\vskip .1cm
-Say 
-$\mu_j(x_{ij})$ is the leaf rule implied by next splitting on a given $x_j$. 
+\vskip -.25cm\sg
+If you fit to random subsets of the data, \\\nv \hfill you get a slightly different
+tree each time.
+\vskip -.25cm
+\end{frame}
 
-\vskip .1cm
-The resulting {\it impurity is a posterior functional}:
-\begin{equation*}
-\sigma^2_j(\boldsymbol{\theta}) = \frac{1}{n}\sum_i \theta_i \left[y_i - \mu_j(x_{ij})\right]^2.
-\end{equation*}
 
-\vskip .3cm
-Say $\sigma_1(\boldsymbol{\theta})$ is the full CART split's impurity, \\and $\sigma_j(\boldsymbol{\theta})$  is that for any other location.
+\begin{frame}
 
-\vskip .5cm
-Then we can derive a first order approx to $\Delta_j(\boldsymbol{\theta})   = \sigma_1^2(\boldsymbol{\theta}) - \sigma_j^2(\boldsymbol{\theta})$
+{\bf  Model Averaging with \theme Random Forests}
 
-\vskip .2cm
-\hfill {\theme and we then have $\mathrm{p}(\Delta_j) < 0$.}
+\vskip .25cm
+\includegraphics[width=4.35in]{../graphs/MCrf}
+
+\vskip .2cm\sg
+Averaging many trees yields a single
+[high quality] response surface. 
+
+\vskip -.2cm
 
 \end{frame}
+
+\begin{frame}
+
+{\bf Random Forests are really awesome}
+
+\vskip .25cm
+They have all the nice properties of trees, 
+while avoiding overfit.
+
+\vskip .25cm
+Unfortunately, search for {\it optimal splits} is expensive on Big  data.  
+
+And if one tree is costly, then  many is infeasible (you want many!).
+
+\vskip .75cm
+{\theme Sub-Sampling Forests:} for each tree, sample  without-replacement only as many observations as are easy to fit a single tree.
+
+\vskip .25cm
+{\nv Sadly, performance suffers: deep structure {\it needs} big samples.  }
+
+\vskip .25cm
+Think about a {\nv rare} data segment of 50 observations that all look and act the same (e.g., all users in some class commit fraud).  
+
+\vskip .1cm
+With 1/50 of the data, you'll never find this group.
+
+\end{frame}
+
+\begin{frame}
+
+{\bf Efficient Big Data analysis}
+
+\vskip .5cm
+To cut computation without hurting performance, we need to think about what portions of the tree are {\theme hard} or {\nv easy} to learn.
+
+\vskip .25cm
+Once we figure this out,  we can use a little bit of the data to\\ learn the easy stuff and direct our full data at the hard stuff.
+
+\vskip .25cm
+FWIW this is the future for Big Data.
+
+\end{frame}
+
+\begin{frame}
+
+{\bf Bayesian Forests}
+
+\vskip .5cm
+Our framework for thinking about easy vs hard learning
+derives Random Forests as a {\theme Bayesian posterior over 
+the  optimal tree.}
+
+\vskip .25cm
+Imagine you see all data and fit the best `population' CART tree. 
+
+\vskip .25cm
+The Bayesian/Random Forest represents your uncertainty about this optimal tree. It is a sample of equally likely possible {\nv best trees.}\\
+
+{\gr (you are uncertain because you don't actually get to see all data.)}
+
+\vskip .5cm BFs and RFs are slightly different: a BF fits CART to randomly weighted data, and RF fits to randomly re-sampled data.\\  But you can think of an RF as an approximation to the BF.
+
+\end{frame}
+
+% \begin{frame}
+
+% {\theme \bf `distribution free' nonparametric statistics }
+
+% \vskip .25cm
+% 1: Find some statistic that matters for your problem, \\~~~~regardless of the `data generating process' (DGP).
+
+% \vskip .25cm
+% 2: Derive the distribution for this stat under minimal assumptions.
+
+% \vskip .5cm
+% For (2): say $\bm{z}_l = \{\bm{x}_l,y_l\}$ is a possible data point. Then
+% \[
+% \mr{p}(\bm{Z}) = \frac{1}{|\bs{\theta}|}\sum_{l=1}^L \theta_l \ds{1}{[\bm{Z} = \bm{z}_l]}
+% \]
+% where $L$ is a {\it large} number of possible values.
+% \begin{itemize}
+% \item Use sample as stand-in for the $L$  points.
+% \item Bayesian  model for the $\theta_l$ weights.
+% \item {\it This is essentially a bootstrap.}
+% \end{itemize}
+
+% \end{frame}
+
+% \begin{frame}[fragile]
+
+
+% Our statistic of interest is the CART fit...
+
+% \vskip .5cm
+% {\sc Bayesian Forest}
+% \begin{algorithmic}
+%    \FOR{$b=1$ {\bfseries to} $B$}
+%    \STATE draw $\boldsymbol{\theta}^b \stackrel{iid}{\sim} \mathrm{Exp}(\mathbf{1})$
+%    \STATE run weighted-sample CART to get $\mathcal{T}_b = \mathcal{T}(\boldsymbol{\theta}^b)$
+%    \ENDFOR
+% \end{algorithmic}
+
+% \vskip .5cm
+% \includegraphics[width=.95\textwidth]{../graphs/mcycle}   
+
+% \end{frame}
+
 
 \begin{frame}
 
 {\bf Theoretical trunk stability}
 
 \vskip .5cm
-For the data at a given node on the
-sample CART tree, the probability that the next split for a posterior
-DGP realization  matches the sample split location is
+
+Given forests as a posterior, 
+we can start talking about {\it variance}.
+
+\vskip .25cm
+We are able to derive theoretically that the earliest structure in the tree -- {\theme the trunk} -- should be very stable for large samples.
+
+\vskip .25cm
+For the data at a given node, the probability that the optimal split on resampled data matches the true optimal split is
 \begin{equation*}
 \mathrm{p}\left(\text{split matches sample CART}\right) \gtrsim 1 - \frac{p}{\sqrt{n}} e^{-n},
 \end{equation*}
 where $p$ is the number of possible split locations and $n$ the number of observations on the current node.  
 
-\vskip .5cm So things are pretty stable (until they aren't).
+\vskip .25cm Things are pretty stable, until they aren't: as the tree grows,  node sizes get smaller and chance of a non-optimal split multiplies.
+
 \end{frame}
 
 \begin{frame}
 
 {\bf California Housing Data}
 
+
+\vskip .5cm
+
+20k observations on median home prices in zip codes.
+
 \vskip .5cm
 
 \includegraphics[width=\textwidth]{../graphs/ca_trunk}
 
 \vskip .5cm
-
-\hfill 20k observations.
+\hfill Above is the trunk you get setting min-leaf-size of 3500.
 
 \end{frame}
 
@@ -363,39 +440,49 @@ where $p$ is the number of possible split locations and $n$ the number of observ
 
 
 \vskip 1cm
-~~~~~~~~~~~~~~~~~~So trees are stable, at the trunk.
+~~~~Empirically and theoretically: trees are stable, at the trunk.
 \vskip -1cm
 
 \end{frame}
 
 \begin{frame}
 
-{\bf A big data problem}
 
-\vskip .5cm
 RFs are expensive when data is too big to fit in memory.
 
-\vskip .5cm
-Subsampling forests (fitting CART on {\it without replacement} samples)
-leads to a big drop in performance.
+\vskip .2cm
+Subsampling forests 
+lead to a big drop in performance.
+
+\vskip .2cm
+{But wait:}  if the trunks are stable, can we just fit that once and then fit forests at each branch?  {\nv Yes!}
 
 \vskip .5cm
-{\theme But wait:}  if the trunks are stable, can we just fit that once and then fit forests at each branch?
+{\bf Empirical Bayesian Forests ({\theme EBF}):}
 
-\vskip .5cm
-This is classic Empirical Bayes: fix higher levels in a {\it hierarchical model}, and direct your machinery at learning the hard bits.
+\vskip .25cm
+\begin{itemize}
+\item fit a single tree to a shallow {\nv trunk}.  
+\item Use this as a mapper to direct full data to each {\nv branch}.  
+\item Fit a full  forest on the smaller branch datasets.
+\end{itemize}
+
+\vskip .25cm
+This is classic Empirical Bayes: fix higher levels in a {\it hierarchical model}, and direct your machinery\texttt{+}data at learning the hard bits.
 
 \end{frame}
 
 \begin{frame}
 
-{\bf Emperical Bayesian Forests}
 
-\vskip .5cm
-\includegraphics[width=.95\textwidth]{../graphs/ca_rmse}
+Since the trunks are all the same for each tree in a full forest,
+our EBF looks nearly the same at a fraction of computational cost.
 
-\vskip .5cm
-Since the trunks in a full forest are all similar, EBF and BF give nearly the same results.  {\it SSF does not.}
+\begin{center}
+\includegraphics[width=.85\textwidth]{../graphs/ca_rmse}
+\end{center}
+
+Here EBF and BF give nearly the same results.  {\it SSF does not.}
 
 
 \end{frame}
@@ -461,6 +548,9 @@ $\overline{\text{RMSE}}$  & \% WTB & \\
 \vskip .5cm
 Distributed computing perspective: {\theme fix only as deep as you must!}
 
+\vskip .1cm
+How big is each machine? Make that your branch size.
+
 \vskip .75cm
 {\small
 \begin{tabular}{c | c c c | c c c | c c c}
@@ -470,12 +560,15 @@ Distributed computing perspective: {\theme fix only as deep as you must!}
 \!\!\!\!\!\!{\it \% Worse Than Best} & \!1.6 & \!2.4 & \!4.3 & \!0.3 & \!0.8 & \!2.2 & \!1.0 & \!4.4 & \!7.6 
 \end{tabular}}
 
-\vskip .75cm
+\vskip .5cm
 Still, open questions.  e.g., more trees vs shallower trunk?
 
-\vskip .2cm
-No rigorous answer yet... maybe it's in the npB framework.
+\vskip .25cm
+A key point: we {\theme do not} think that EBFs are better than forests fit to all the data.  But EBFs allow you to fit to {\nv much more data} in less time without hurting performance too much.
 
+
+\vskip .25cm
+{\nv Big Data axiom}: more data beats fancy model.
 
 \end{frame}
 
@@ -491,9 +584,6 @@ or shipping delays, or any of many other problems.
 \vskip .5cm
 The models are updated frequently, and  information\\ about $\mathrm{p}(\text{BBE})$
 is an input to search rankings  and more.
-
-\vskip .5cm
-{\nv Big Data axiom}: more data beats fancy model.
 
 \vskip .2cm The best thing to improve predictions is more data.  \\With millions of daily transactions, there's little limit on data.
 
