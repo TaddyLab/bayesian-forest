@@ -24,7 +24,6 @@
 \newcommand{\sg}{\color{DarkSlateGray}}
 \newcommand{\nv}{\color{Navy}}
 \setbeamercolor{itemize item}{fg=gray}
-\newcommand{\sk}{\vspace{.25cm}}
 
 % common math markups
 \newcommand{\bs}[1]{\boldsymbol{#1}}
@@ -42,23 +41,22 @@
 \begin{document}
 
 \setcounter{page}{0}
-{% \usebackgroundtemplate{\includegraphics[height=\paperheight]{phoenix}}
+{ \usebackgroundtemplate{\includegraphics[height=\paperheight]{phoenix}}
 \begin{frame}[plain]
 \begin{center}
 
 {\bf \LARGE \theme }
 
-\vskip .25cm
-{\bf \LARGE \theme Empirical Bayesian Forests }
+{\bf \Large  Big Data and Bayesian Nonparametrics
 
-\vskip 1cm
+\vskip .25cm
+{\theme Example:} Empirical Bayesian Forests}
+
+\vskip 2cm
 Matt Taddy,  Chicago Booth
 
-\vskip .1cm
-with Chun-Sheng Chen, Jun Yu, and Mitch Wyle at eBay
 
-
-\vfill
+\vskip .25cm
 {\texttt{faculty.chicagobooth.edu/matt.taddy/research}}
 
 \end{center}
@@ -66,336 +64,234 @@ with Chun-Sheng Chen, Jun Yu, and Mitch Wyle at eBay
 
 
 \begin{frame}
-{What is a Decision Tree?}
 
-\includegraphics[width=4.25in]{../graphs/umbrella}
-
-
-\vskip .3cm
-\bk Tree-logic uses a series of steps to come to a conclusion.\\
- The trick is to have mini-decisions combine for good choices.
-\\ Each decision is a node, and the final prediction is a {\theme
-  leaf node}
-
-\end{frame}
-
-
-\begin{frame}
-
-{\bf Decision Trees are a Regression Model}
-
-\sk
-You have inputs $\bm{x}$ {\gr (forecast, current conditions)} \\ and an output of
-interest $y$ {\gr (need for an umbrella)}.
-
-
-\sk 
-Based on previous data, the goal is to specify branches of \\ choices 
-that lead to good predictions in new scenarios.
-
-
-{In other words, you want to estimate a {\nv Tree Model}.}
-
-
-\sk
-\bk
-Instead of linear coefficients, we need to find `{\theme decision nodes}': \\~~~split-rules defined via thresholds on some dimension of 
-$\bm{x}$.
+{\bf Challenges of being Big and Bayesian}
 
 \vskip .5cm
-Nodes have a parent-child structure: every node except the root has a parent, and every node except the leaves has two children.
+{\nv The sample sizes are enormous.}
+\begin{itemize}
+\item we'll see 21 and 200 million today.  
+\item Data can't fit in memory, or even storage, on a single machine.
+\item Our familiar MCMC algorithms take too long.
+\end{itemize}
 
+\vskip .25cm
+{\nv The data are super weird.  }
+\begin{itemize}
+\item Internet transaction data distributions have a big spike at zero and spikes at other discrete values (e.g., 1 or \$99).
+\item Big tails  that matter.
+\item We cannot  write down believable models.
+\end{itemize}
 
 \end{frame}
 
+\begin{frame}
+
+Both `Big' and `Strange' beg for nonparametrics.
+
+\vskip .5cm
+In usual BNP you {\it model} a complex generative process with flexible priors, then apply that model directly in prediction and inference.
+\[
+\text{e.g.,~~~}y = f(\bm{x}) + \epsilon,~~\text{or~even~just}~~f(y|\bm{x})
+\]
+However averaging over all of the nuisance parameters we introduce to be `flexible' is a hard computational problem.
+
+\vskip .5cm
+\hfill {\theme Can we do scalable BNP?}
+\end{frame}
 
 \begin{frame}
 
-{\bf Decision trees are like a game of mousetrap}
+Frequentists are great at finding simple procedures {\gr\small (e.g. $[\bm{X}'\bm{X}]^{-1}\bm{X}'y$)\!} and  showing that they will `work' regardless of the true DGP.
 
-\vskip .25cm
-You drop your $\bm{x}$ covariates in at the top, and each decision node
-bounces you either left or right.  Finally, you end up in a {\theme leaf node} which contains the data subset defined by these decisions (splits).
+\hfill{\gr \small (DGP = Data Generating Process)~~~~~~~}
 
+\vskip .5cm
+This is classical `distribution free' nonparametrics.
+
+\vskip .15cm
+1: Find some statistic that is useful regardless of DGP.
+
+\vskip .15cm
+2: Derive the distribution for this stat under minimal assumptions.
+
+\vskip .5cm
+Practitioners apply the simple stat and feel happy that it will work.
+
+% {\gr No need to re-model the underlying DGP each time, and you \\don't need to have a PhD in Bayesian Statistics to apply the ideas.}
+
+\vskip .5cm\hfill
+{\theme Can we Bayesians provide something like this?}
+
+\end{frame}
+
+\begin{frame}
+
+{\bf distribution free Bayesian nonparametrics}
+
+\vskip .5cm
+{Find some {\it statistic of the DGP} that you care about.}
+\vskip .1cm
+\begin{itemize}
+\item Derive it from first principles, e.g. moment conditions.
+\item Or a statistic could be an algorithm that we know works.
+\end{itemize}
+\vskip .1cm
+Call this statistic $\bs{\theta}(g)$ where $g(\bm{z})$ is the DGP (e.g., for $\bm{z} = [\bm{x},y]$).
+
+\vskip .5cm
+Then you write down a flexible  model for the DGP $g$, and study properties of the posterior on $\bs{\theta}(g)$ induced by the posterior over $g$.
+
+\end{frame}
+
+\begin{frame}
+
+{\bf A flexible model for the DGP}
+
+\vskip .5cm  Let's go back to Ferguson '73 and a multinomial sampling model:
 
 \begin{equation*}
-\begin{array}{ccccc}
-& &  \hskip -2.2cm x_i = 0 &&\\
-& & \hskip -2.3cm \swarrow ~~~\searrow &&\\
-&  \hskip -.8cm x_j = 2 & & \hskip -2.3cm \{\bm{x}: x_i>0\}&\\
-& \hskip -.7cm \swarrow~~~\searrow & & &\\
-\{\bm{x}: x_i \leq  0, x_j \leq  2\}& & \hskip -.5cm \{ \bm{x}: x_i \leq 0, x_j>2 \}& &
-\end{array}
-\end{equation*}
+g(\bm{z}) = \frac{1}{|\bs{\theta}|}\sum_{l=1}^L \theta_l \ds{1}{[\bm{z} =
+\bs{\zeta}_l]}, \end{equation*}$\bs{\mc{Z}} = \{\bs{\zeta}_1 \dots
+\bs{\zeta}_L\}$ is the {\it fixed} support of the DGP and $\theta_l \stackrel{iid}{\sim} \mr{Exp}(a)$.
+
+\vskip .25cm
+After observing $\bm{Z} = \{\bm{z}_1 \ldots \bm{z}_n\}$, posterior has $\theta_l \sim \mr{Exp}(a\!+\!\ds{1}_{\bs{\zeta}_l \in \bm{Z}})$. {\gr (say every $\bm{z}_i$ is unique)}.
 
 \vskip .5cm
-The {\nv prediction rule} at each leaf (a class probability or predicted $\hat y$) is  the average of the sample $y$ values that ended up in that leaf.
-
-\end{frame}
-
-
-\begin{frame}
-
-Given a {\nv parent} set of data $\{\bm{x}_i,y_i\}_{i=1}^n$, the {\theme optimal split}
-is that location $x_{ij}$ on some dimension $j$ on some observation $i$,\\ so that the {\nv child} sets 
-\[
-\text{\rm{left}:}~\{\bm{x}_k,y_k:~x_{kj} \leq x_{ij}\}
-\text{~~and~~\rm{right}:}~\{\bm{x}_k,y_k:~x_{kj} > x_{ij}\}
-\]
-are as homogeneous in response $y$ as possible.
-
-\vskip .5cm
-For example, we will minimize the sum of squared errors \\
-\[
-\sum_{k \in \mathrm{left}} (y_k - \bar y_{\mathrm{left}})^2 + \sum_{k \in \mathrm{right}} (y_k - \bar y_{\mathrm{right}})^2
-\]
-for {\it regression trees}, or gini impurity  for {\it classification trees} \\(e.g., the sum across children `c' of $n_{\mathrm{c}}\bar y_{\mathrm{c}}(1-\bar y_{\mathrm{c}})$ if $y\in \{0,1\}$).
-
-\end{frame}
-
-\begin{frame}
-
-
-{\bf We estimate decision trees by being recursive and greedy}
-
-
-\vskip .5cm
-{\nv CART} grows the tree through a sequence of splits:
-
-\vskip .25cm
-\begin{itemize}
-\item Given any set (node) of data, you can find the {\theme optimal split} (the error minimizing split) and divide into two child sets.
-\item 
-We then look at each child set, and again find the optimal split to divide it into two homogeneous subsets.
-\item
-The children become  parents, and we look again for the optimal split on their new children (the grandchildren!).
-\end{itemize}
-
-\vskip .25cm
-You stop splitting and growing when the size of the leaf nodes hits some minimum threshold (e.g., say no less than 10 obsv per leaf).
-
-\end{frame}
-
-
-
-
-\begin{frame}
-
-
-{\bf  Trees are awesome}
-
-\vskip .25cm 
-They automatically learn non-linear response functions
-\\ and will discover interactions between variables.
-
-\vskip .25cm
-Example: Motorcycle Crash Test Dummy Data
-
-\sg
-$x$ is time from impact, $y$ is acceleration on the helmet.
-
-\vspace{-1cm}
-\begin{adjustwidth}{-.3in}{}
-\includegraphics[width=4.6in]{../graphs/MCtree}
-\end{adjustwidth}
-
-\vskip -.75cm
-\end{frame}
-
-
-\begin{frame}
-
-{Unfortunately, it is tough to avoid overfit with CART:}
-
-\vskip .1cm \bk
-Deep tree structure is so unstable that optimal depth is not easily chosen via cross validation, and there's no theory to fall back on.
-
-\vskip .5cm \bk
-Instead, we can average over a {\nv bootstrapped} sample of trees:  
-
-\begin{itemize}
-\item repeatedly re-sample the data, {\nv with-replacement}, \\to get a `jittered' dataset of $n$ observations.
-\item for each resample, {\nv fit a CART tree}.
-\item when you want to predict $y$ for some $\bm{x}$, \\take the {\nv average} prediction from this forest of trees.
-\end{itemize}
-Real structure that persists across datasets shows up in the average.  Noisy useless signals will average out to have no effect. 
-
-\sk
-{\bf \theme \hfill This is a Random Forest {\gr (RF)}}
-\end{frame}
-
-
-\begin{frame}
-
-
-\begin{center}
-\includegraphics[width=.75\textwidth]{../graphs/MCtreedraw}
-\end{center}
-
-\vskip -.25cm
-Fitting CART to sampled-with-replacement data is equivalent to randomly {\nv weighting} your observations in the deviance calculations. 
-
-\hfill {\gr (size proportional to weight in this picture)}.
-
-\end{frame}
-
-\begin{frame}
-
-{\bf \theme Random Trees \bk for the Motorcycle Data}
-
-
-\vspace{-1cm}
-\includegraphics[width=4.25in]{../graphs/MCparticles}
-
-\vskip -.25cm\sg
-If you fit to random subsets of the data, \\\nv \hfill you get a slightly different
-tree each time.
-\vskip -.25cm
-\end{frame}
-
-
-\begin{frame}
-
-{\bf  Model Averaging with \theme Random Forests}
-
-\vskip .25cm
-\includegraphics[width=4.35in]{../graphs/MCrf}
-
-\vskip .2cm\sg
-Averaging many trees yields a single
-[high quality] response surface. 
-
-\vskip -.2cm
-
-\end{frame}
-
-\begin{frame}
-
-{\bf Random Forests are really awesome}
-
-\vskip .25cm
-They have all the nice properties of trees, 
-while avoiding overfit.
-
-\vskip .25cm
-Unfortunately, search for {\it optimal splits} is expensive on Big  data.  
-
-And if one tree is costly, then  many is infeasible (you want many!).
-
-\vskip .75cm
-{\theme Sub-Sampling Forests:} for each tree, sample  without-replacement only as many observations as are easy to fit a single tree.
-
-\vskip .25cm
-{\nv Sadly, performance suffers: deep structure {\it needs} big samples.  }
-
-\vskip .25cm
-Think about a {\nv rare} data segment of 50 observations that all look and act the same (e.g., all users in some class commit fraud).  
+Taking $a \to 0$ leads to $\mr{p}(\theta_l = 0) = 1$ for $\bs{\zeta}_l \notin \bm{Z}$.
 
 \vskip .1cm
-With 1/50 of the data, you'll never find this group.
+So the posterior has $g(\bm{z}) = \tfrac{1}{|\bs{\theta}|}
+\sum_{l=1}^L \theta_l \ds{1}{[\bm{z} =
+\bm{z}_l]}$ with $\theta_i \sim \mr{Exp}(1)$.
 
+\vskip .5cm\hfill
+{\theme This is just the Bayesian bootstrap.}
+
+\vskip -.5cm
 \end{frame}
 
 \begin{frame}
 
-{\bf Efficient Big Data analysis}
+{\bf {\theme Example: } Ordinary Least Squares}
 
 \vskip .5cm
-To cut computation without hurting performance, we need to think about what portions of the tree are {\theme hard} or {\nv easy} to learn.
+The {\it population} OLS projection is a posterior functional
+\begin{equation*}
+\bs{\beta} = (\bm{X}'\bs{\Theta}\bm{X})^{-1}  \bm{X}'\bs{\Theta}\bm{y}
+\end{equation*}
+where $\bs{\Theta} = \mr{diag}(\bs{\theta})$.  
+{\theme This is a random variable \bk (sample via BB).}
 
-\vskip .25cm
-Once we figure this out,  we can use a little bit of the data to\\ learn the easy stuff and direct our full data at the hard stuff.
 
-\vskip .25cm
-FWIW this is the future for Big Data.
+\vskip .5cm We can derive posterior moments for a first-order approx
+\[
+\bs{\tilde \beta} = [\bm{X}'\bm{X}]^{-1}\bm{X}'y + 
+\nabla \bs{\beta}\big |_{\bs{\theta}=\bm{1}} (\bs{\theta} - \bm{1})
+\]
+e.g., $\mr{var}(\bs{\tilde \beta}) \approx (\bm{X}^{\prime}\bm{X})^{-1}\bm{X}^{\prime}\mr{diag}(\bm{e})^2\bm{X}^{\prime}(\bm{X}^{\prime}\bm{X})^{-1}$, where $e_i  = y_i - \bm{x}_i'\bs{\hat\beta}$.
+
+\vskip .5cm{\gr \hfill
+ See Lancaster 2003 or Poirier 2011.}
 
 \end{frame}
 
+
 \begin{frame}
 
-{\bf Bayesian Forests}
+
+{\bf {\theme Example:} Decision Trees}
 
 \vskip .5cm
-Our framework for thinking about easy vs hard learning
-derives Random Forests as a {\theme Bayesian posterior over 
-the  optimal tree.}
+Trees are great: nonlinearity, deep interactions, heteroskedasticity.
 
-\vskip .25cm
-Imagine you see all data and fit the best `population' CART tree. 
+\begin{center}
+\includegraphics[width=4in]{../graphs/umbrella}
+\end{center}
 
-\vskip .25cm
-The Bayesian/Random Forest represents your uncertainty about this optimal tree. It is a sample of equally likely possible {\nv best trees.}\\
+The `optimal' decision tree is a statistic we care about {\gr (s.w.c.a)}.
 
-{\gr (you are uncertain because you don't actually get to see all data.)}
-
-\vskip .5cm BFs and RFs are slightly different: a BF fits CART to randomly weighted data, and RF fits to randomly re-sampled data.\\  But you can think of an RF as an approximation to the BF.
 
 \end{frame}
-
-% \begin{frame}
-
-% {\theme \bf `distribution free' nonparametric statistics }
-
-% \vskip .25cm
-% 1: Find some statistic that matters for your problem, \\~~~~regardless of the `data generating process' (DGP).
-
-% \vskip .25cm
-% 2: Derive the distribution for this stat under minimal assumptions.
-
-% \vskip .5cm
-% For (2): say $\bm{z}_l = \{\bm{x}_l,y_l\}$ is a possible data point. Then
-% \[
-% \mr{p}(\bm{Z}) = \frac{1}{|\bs{\theta}|}\sum_{l=1}^L \theta_l \ds{1}{[\bm{Z} = \bm{z}_l]}
-% \]
-% where $L$ is a {\it large} number of possible values.
-% \begin{itemize}
-% \item Use sample as stand-in for the $L$  points.
-% \item Bayesian  model for the $\theta_l$ weights.
-% \item {\it This is essentially a bootstrap.}
-% \end{itemize}
-
-% \end{frame}
-
-% \begin{frame}[fragile]
-
-
-% Our statistic of interest is the CART fit...
-
-% \vskip .5cm
-% {\sc Bayesian Forest}
-% \begin{algorithmic}
-%    \FOR{$b=1$ {\bfseries to} $B$}
-%    \STATE draw $\boldsymbol{\theta}^b \stackrel{iid}{\sim} \mathrm{Exp}(\mathbf{1})$
-%    \STATE run weighted-sample CART to get $\mathcal{T}_b = \mathcal{T}(\boldsymbol{\theta}^b)$
-%    \ENDFOR
-% \end{algorithmic}
-
-% \vskip .5cm
-% \includegraphics[width=.95\textwidth]{../graphs/mcycle}   
-
-% \end{frame}
 
 
 \begin{frame}
 
-{\bf Theoretical trunk stability}
+
+{\bf CART} fits a tree by greedily growing with optimal splits.
+
+\vskip .5cm
+Given {\nv parent} node $\{\bm{x}_i,y_i\}_{i=1}^n$, the optimal split
+finds $x_{ij}$ so that 
+\[
+\rm{left}(x_{ij}):\{\bm{x}_k,y_k:~x_{kj} \leq x_{ij}\}
+\text{~~and~~}\rm{right}(x_{ij}):\{\bm{x}_k,y_k:~x_{kj} > x_{ij}\}
+\]
+{\nv child} sets are as homogeneous in response $y$ as possible.
+
+
+e.g., a regression tree recursively splits to  minimize 
+\[
+n\sigma^2(x, \bs{\theta} ) = \sum_{k \in \mathrm{left}(x)} \theta_k (y_k - \mu_{\mathrm{left}(x)})^2 + \sum_{k \in \mathrm{right}(x)} \theta_k (y_k - \mu_{\mathrm{right}(x)})^2
+\]
+where $\theta_k$ are observation weights {\gr ($\bar y_\star$ are calculated w.r.t. $\bs{\theta}$)}.
+
+\vskip .5cm{\theme
+If population-CART would predict well, then it's a s.w.c.a.}
+
+
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+
+{\bf \theme Bayesian Forests: \bk Sample the posterior for CART trees}
+
+\vskip .25cm
+For $b=1 \dots B$: \\
+   ~~~~~~~~~~$\bullet$ draw $\boldsymbol{\theta}^b \stackrel{iid}{\sim} \mathrm{Exp}(\mathbf{1})$
+   \\
+   ~~~~~~~~~~$\bullet$ run weighted-sample CART to get $\mathcal{T}_b = \mathcal{T}(\boldsymbol{\theta}^b)$
+ 
+\vskip .5cm\small 
+~~~~~~~~~~~~~~~~~~~~~{\it one tree~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~posterior mean}\\
+\includegraphics[height=1.75in]{../../bayesian-forest/graphs/MCtreedraw}   
+\includegraphics[height=1.75in]{../../bayesian-forest/graphs/MCbforest}   
+
+\vskip .25cm
+This is {\it very similar} to a random forest.  So, RFs $\approx$ posterior over trees.
+\vskip -.5cm
+
+\end{frame}
+
+
+
+\begin{frame}
+
+{\bf Theoretical {\theme trunk} stability}
 
 \vskip .5cm
 
 Given forests as a posterior, 
 we can start talking about {\it variance}.
 
-\vskip .25cm
-We are able to derive theoretically that the earliest structure in the tree -- {\theme the trunk} -- should be very stable for large samples.
+\vskip .1cm
+As in simple OLS, look at the posterior for 1st order approx.
+\[
+\sigma^2(x,\bs{\theta}) \approx \sigma^2(x,\boldsymbol{1}) + \nabla \sigma^2\big |_{\boldsymbol{\theta}=\mathbf{1}} (\boldsymbol{\theta} - \boldsymbol{1}) =  \frac{1}{n}\sum_i \theta_i \left[y_i - \bar{y}_i(x)\right]^2
+\]
+with $\bar y_i (x)$ the sample mean in $i$'s node when splitting on $x$.
 
-\vskip .25cm
-For the data at a given node, the probability that the optimal split on resampled data matches the true optimal split is
-\begin{equation*}
-\mathrm{p}\left(\text{split matches sample CART}\right) \gtrsim 1 - \frac{p}{\sqrt{n}} e^{-n},
+\vskip .1cm
+Based on this approx, we can say that for data at a given node, 
+\begin{equation*}\theme
+\mathrm{p}\left(\text{optimal split matches sample CART}\right) \gtrsim 1 - \frac{p}{\sqrt{n}} e^{-n},
 \end{equation*}
-where $p$ is the number of possible split locations and $n$ the number of observations on the current node.  
+with $p$ split locations and $n$ observations.  
 
-\vskip .25cm Things are pretty stable, until they aren't: as the tree grows,  node sizes get smaller and chance of a non-optimal split multiplies.
+\vskip .5cm{\nv Things are pretty stable, until they aren't: as the tree grows,  node sizes get smaller and chance of a non-optimal split multiplies.}
 
 \end{frame}
 
@@ -410,7 +306,7 @@ where $p$ is the number of possible split locations and $n$ the number of observ
 
 \vskip .5cm
 
-\includegraphics[width=\textwidth]{../graphs/ca_trunk}
+\includegraphics[width=\textwidth]{../../bayesian-forest/graphs/ca_trunk}
 
 \vskip .5cm
 \hfill Above is the trunk you get setting min-leaf-size of 3500.
@@ -422,7 +318,7 @@ where $p$ is the number of possible split locations and $n$ the number of observ
 \begin{columns}
 
 \begin{column}{2.15in}
-\includegraphics[width=2.5in]{../graphs/ca_splits}
+\includegraphics[width=2.5in]{../../bayesian-forest/graphs/ca_splits}
 \end{column}
 
 \begin{column}{2in}
@@ -448,7 +344,7 @@ where $p$ is the number of possible split locations and $n$ the number of observ
 \begin{frame}
 
 
-RFs are expensive when data is too big to fit in memory.
+Forests are expensive when data is too big to fit in memory.
 
 \vskip .2cm
 Subsampling forests 
@@ -479,7 +375,7 @@ Since the trunks are all the same for each tree in a full forest,
 our EBF looks nearly the same at a fraction of computational cost.
 
 \begin{center}
-\includegraphics[width=.85\textwidth]{../graphs/ca_rmse}
+\includegraphics[width=.85\textwidth]{../../bayesian-forest/graphs/ca_rmse}
 \end{center}
 
 Here EBF and BF give nearly the same results.  {\it SSF does not.}
@@ -561,14 +457,14 @@ How big is each machine? Make that your branch size.
 \end{tabular}}
 
 \vskip .5cm
-Still, open questions.  e.g., more trees vs shallower trunk?
+Still, open questions:  e.g., more trees vs shallower trunk?
 
-\vskip .25cm
-A key point: we {\theme do not} think that EBFs are better than forests fit to all the data.  But EBFs allow you to fit to {\nv much more data} in less time without hurting performance too much.
+% \vskip .25cm
+% A key point: we {\theme do not} think that EBFs are better than forests fit to all the data.  But EBFs allow you to fit to {\nv much more data} in less time without hurting performance too much.
 
 
-\vskip .25cm
-{\nv Big Data axiom}: more data beats fancy model.
+% \vskip .25cm
+% {\nv Big Data axiom}: more data beats fancy model.
 
 \end{frame}
 
@@ -585,7 +481,7 @@ or shipping delays, or any of many other problems.
 The models are updated frequently, and  information\\ about $\mathrm{p}(\text{BBE})$
 is an input to search rankings  and more.
 
-\vskip .2cm The best thing to improve predictions is more data.  \\With millions of daily transactions, there's little limit on data.
+\vskip .5cm The best thing to improve predictions is more data.  \\With millions of daily transactions, there's little limit on data.
 
 \end{frame}
 
@@ -594,9 +490,9 @@ is an input to search rankings  and more.
 {\bf EBFs at EBay}
 
 \vskip .5cm
-Full random forest runs take too long on full data \\(even using distributed tree algorithms).
+Random forest runs take too long on full data.
 
-\vskip .5cm
+\vskip .25cm
 Subsampling led to a noticeable and big drop in performance.
 
 \vskip .5cm
@@ -608,6 +504,8 @@ separate locations corresponding to each branch.
 \item Forests are then fit on a machine for each branch.  
 \end{itemize}
 
+
+
 \end{frame}
 
 \begin{frame}
@@ -618,34 +516,46 @@ separate locations corresponding to each branch.
 
 On 12 million transactions,  EBF with 32 branches yields a\\ 1.3\% drop in misclassification over the SSF alternatives.  
 
-\vskip .5cm
-This amounts to more than 20,000 extra detected \\BBE occurrences over this short time window.
-
 \vskip .5cm 
-Putting it into production requires some careful engineering, \\but this really is {\it a very simple algorithm}.  
+Putting it into production requires some careful engineering, \\but this really is a very simple algorithm.  {\theme Big gain, little pain.} 
 
 \vskip .5cm
-If you already fit RFs and are hitting time/space constraints,\\ then an EBF is lots of gain for little pain.
+A key point:  EBFs are not inherently `better' than forests fit to all of the data.  But EBFs can be fit to {\nv more data} in less time.
+
+
+\vskip .25cm
+{\nv Big Data axiom}: more data beats fancy model.
 
 \end{frame}
+
 
 \begin{frame}
 
-{\theme\bf  The key to big data} 
+\vskip .5cm
+{\bf Efficient Big Data analysis}
 
-\vskip .5cm Use plug-in estimates for the stuff that is easy to measure.
+\vskip .25cm
+To cut computation without hurting performance, we need to think about what portions of the `model' are {\theme hard} or {\nv easy} to learn.
 
-\vskip .15cm Partition conditional on these plug-ins.
+\vskip .25cm
+Once we figure this out,  we can use a little bit of the data to\\ learn the easy stuff and direct our full data at the hard stuff.
 
-\vskip .15cm   Direct the full data towards the stuff that is tough to learn.
+\vskip .25cm
+I believe that this is the future for Big Data.
 
-\vskip 1.5cm
-\begin{center}
-\Huge
-Thanks!
-\end{center}
+\vskip .75cm
+{\bf Big Data and distribution free BNP}
+
+\vskip .25cm I think about BNP as a way to analyze (and improve) algorithms.  
+
+Decouple  action/prediction from the full generative process model.
+
+\vskip 1cm
+\hfill \huge \theme \bf thanks!
 
 \end{frame}
+
+
 
 \end{document}
 
