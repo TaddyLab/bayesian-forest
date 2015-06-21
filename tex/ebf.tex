@@ -225,17 +225,17 @@ The `optimal' decision tree is a statistic we care about {\gr (s.w.c.a)}.
 Given {\nv parent} node $\{\bm{x}_i,y_i\}_{i=1}^n$, the optimal split
 finds $x_{ij}$ so that 
 \[
-\rm{left}(x_{ij}):\{\bm{x}_k,y_k:~x_{kj} \leq x_{ij}\}
-\text{~~and~~}\rm{right}(x_{ij}):\{\bm{x}_k,y_k:~x_{kj} > x_{ij}\}
+\mathrm{left}(x_{ij}):\{\bm{x}_k,y_k:~x_{kj} \leq x_{ij}\}
+\text{~~and~~}\mathrm{right}(x_{ij}):\{\bm{x}_k,y_k:~x_{kj} > x_{ij}\}
 \]
 {\nv child} sets are as homogeneous in response $y$ as possible.
 
 
 e.g., a regression tree recursively splits to  minimize 
 \[
-n\sigma^2(x, \bs{\theta} ) = \sum_{k \in \mathrm{left}(x)} \theta_k (y_k - \mu_{\mathrm{left}(x)})^2 + \sum_{k \in \mathrm{right}(x)} \theta_k (y_k - \mu_{\mathrm{right}(x)})^2
+|\bs{\theta}|\sigma^2(x, \bs{\theta} ) = \sum_{k \in \mathrm{left}(x)} \theta_k (y_k - \mu_{\mathrm{left}(x)})^2 + \sum_{k \in \mathrm{right}(x)} \theta_k (y_k - \mu_{\mathrm{right}(x)})^2
 \]
-where $\theta_k$ are observation weights {\gr ($\bar y_\star$ are calculated w.r.t. $\bs{\theta}$)}.
+where $\theta_k$ are observation weights  and $\displaystyle\mu_{\mathrm{c}(x)} = \frac{1}{|\bs{\theta}_{\mathrm{c}(x)}|} \sum_{k \in \mathrm{c}(x)} \theta_ky_k$.
 
 \vskip .5cm{\theme
 If population-CART would predict well, then it's a s.w.c.a.}
@@ -463,9 +463,6 @@ Still, open questions:  e.g., more trees vs shallower trunk?
 % A key point: we {\theme do not} think that EBFs are better than forests fit to all the data.  But EBFs allow you to fit to {\nv much more data} in less time without hurting performance too much.
 
 
-% \vskip .25cm
-% {\nv Big Data axiom}: more data beats fancy model.
-
 \end{frame}
 
 \begin{frame}
@@ -482,6 +479,10 @@ The models are updated frequently, and  information\\ about $\mathrm{p}(\text{BB
 is an input to search rankings  and more.
 
 \vskip .5cm The best thing to improve predictions is more data.  \\With millions of daily transactions, there's little limit on data.
+
+
+% \vskip .25cm
+% {\nv Big Data axiom}: more data beats fancy model.
 
 \end{frame}
 
@@ -522,9 +523,6 @@ Putting it into production requires some careful engineering, \\but this really 
 \vskip .5cm
 A key point:  EBFs are not inherently `better' than forests fit to all of the data.  But EBFs can be fit to {\nv more data} in less time.
 
-
-\vskip .25cm
-{\nv Big Data axiom}: more data beats fancy model.
 
 \end{frame}
 
