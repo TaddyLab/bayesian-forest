@@ -65,7 +65,7 @@ Matt Taddy,  Chicago Booth
 
 \begin{frame}
 
-{\bf Challenges of being Big and Bayesian}
+{\bf Big Data}
 
 \vskip .5cm
 {\nv The sample sizes are enormous.}
@@ -390,32 +390,6 @@ Here EBF and BF give nearly the same results.  {\it SSF does not.}
 
 \vskip .5cm
 \begin{minipage}{0.5\linewidth}
-\includegraphics[width=\textwidth]{../graphs/beer}
-\end{minipage}
-~~
-\begin{minipage}{0.4\linewidth}
-{\footnotesize
-\begin{tabular}{c c | l}
-$\overline{\text{MCR}}$  & \% WTB & \\
-\cline{1-2}\rule{0pt}{3ex} 
-0.4341 &  0.0 & BF \\
-0.4531 &  4.4 & EBF \\
-0.5989 & 38.0 & SSF \\
-0.6979 & 60.8 & DT \\
-\end{tabular}}
-\end{minipage}
-
-\vskip .5cm
-\hfill Predicting beer choice from demographics
-
-\end{frame}
-
-\begin{frame}
-
-{\bf EBFs work all over the place}
-
-\vskip .5cm
-\begin{minipage}{0.5\linewidth}
 \includegraphics[width=\textwidth]{../graphs/wine}
 \end{minipage}
 ~~
@@ -432,7 +406,34 @@ $\overline{\text{RMSE}}$  & \% WTB & \\
 \end{minipage}
 
 \vskip .5cm
-\hfill or wine rating from chemical profile
+\hfill Predicting wine rating from chemical profile
+
+\end{frame}
+
+
+\begin{frame}
+
+{\bf EBFs work all over the place}
+
+\vskip .5cm
+\begin{minipage}{0.5\linewidth}
+\includegraphics[width=\textwidth]{../graphs/beer}
+\end{minipage}
+~~
+\begin{minipage}{0.4\linewidth}
+{\footnotesize
+\begin{tabular}{c c | l}
+$\overline{\text{MCR}}$  & \% WTB & \\
+\cline{1-2}\rule{0pt}{3ex} 
+0.4341 &  0.0 & BF \\
+0.4531 &  4.4 & EBF \\
+0.5989 & 38.0 & SSF \\
+0.6979 & 60.8 & DT \\
+\end{tabular}}
+\end{minipage}
+
+\vskip .5cm
+\hfill or beer choice from demographics
 
 \end{frame}
 
