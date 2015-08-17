@@ -179,7 +179,7 @@ $a \to 0$ leads to $\mr{p}(\theta_l = 0) = 1$ for $\bs{\zeta}_l \notin \bm{Z}$.
 where $\bs{\Theta} = \mr{diag}(\bs{\theta})$.  
 {\theme This is a random variable. \gr (sample via BB)}
 
-\vskip .5cm
+\vskip .75cm
 \includegraphics[width=\textwidth]{graphs/ozone}
 \end{frame}
 
@@ -187,23 +187,26 @@ where $\bs{\Theta} = \mr{diag}(\bs{\theta})$.
 
 {\footnotesize\nv
 \begin{verbatim}
-data(airquality)
-n <- nrow(airquality)
-B <- 2000
-beta <- vector(length=B)
+data(airquality); n <- nrow(airquality)
+B <- 1000; beta <- vector(length=B)
 for(b in 1:B){
   fit <- lm(Ozone ~., data=airquality, weights=rexp(n))
-  beta[b] <- coef(fit)["Wind"]
-}
+  beta[b] <- coef(fit)["Wind"] }
+sampfit <- lm(Ozone ~ ., data=airquality)
+coef <- summary(sampfit)$coef["Wind",1:2]
+x <- as.matrix(cbind(1,na.omit(airquality)[,-1]))
+xxi <- solve(crossprod(x))
+sandwich <- xxi%*%t(x)%*%diag(sampfit$resid^2)%*%x%*%xxi
 hist(beta, col=8, main="", 
   xlab="Coefficient for Ozone on Wind", 
   freq=FALSE,ylim=c(0,0.6),breaks=25)
-sampfit <- summary(lm(Ozone ~ ., data=airquality))$coef["Wind",1:2]
 grid <- seq(-6,5,length=500)
-lines(grid, dnorm(grid,sampfit[1],sampfit[2]),col=2,lwd=2)
+lines(grid, dnorm(grid,coef[1],coef[2]),col=2,lwd=2)
+lines(grid, dnorm(grid,coef[1],sqrt(sandwich[3,3])),col=4,lwd=2)
 legend("topleft",col=c(8,2),lwd=4, 
-  legend=c("Bayes nonparametric posterior",
-           "theoretical sampling distribution"),bty="n")
+  legend=c("bootstrap BNP posterior",
+           "normal approx BNP posterior",
+           "standard sampling distribution"),bty="n")
 \end{verbatim}
 }
 
@@ -211,14 +214,24 @@ legend("topleft",col=c(8,2),lwd=4,
 
 \begin{frame}
 
-Posterior moments for a first-order approx
+{\nv \bf What is the blue line? } \\BB sampling is great, but analytic approximations are also useful.
+
+\vskip .5cm
+Consider a first-order Taylor series approximation,
 \[
 \bs{\tilde \beta} = [\bm{X}'\bm{X}]^{-1}\bm{X}'y + 
 \nabla \bs{\beta}\big |_{\bs{\theta}=\bm{1}} (\bs{\theta} - \bm{1})
 \]
+
+We can derive {\it exact} posterior moments for $\bs{\tilde \beta}$ under $\theta_i \stackrel{iid}{\sim}\mathrm{Exp}(1)$.
+
+\vskip .25cm
 e.g., $\mr{var}(\bs{\tilde \beta}) \approx (\bm{X}^{\prime}\bm{X})^{-1}\bm{X}^{\prime}\mr{diag}(\bm{e})^2\bm{X}^{\prime}(\bm{X}^{\prime}\bm{X})^{-1}$, where $e_i  = y_i - \bm{x}_i'\bs{\hat\beta}$.
 
-\vskip .5cm{\gr \hfill
+\vskip .25cm
+This is the familiar Huber-White `Sandwich' variance formula.
+
+\vskip .25cm{\gr \hfill
  See Lancaster 2003 or Poirier 2011.}
 
 \end{frame}
