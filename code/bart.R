@@ -1,6 +1,22 @@
 library(BayesTree)
+library(MASS)
+data(mcycle)
 library(tgp)
 
+plot(mcycle, pch=21, cex=.75, bg=8)
+xtest <- seq(0,60,length=400)
+bartFit = bart(mcycle[,1],mcycle[,2],xtest,ntree=100,ndpost=200)
+bcartFit = bcart(mcycle[,1],mcycle[,2],xtest,tree=c(0.99,.1,2),basemax=1)
+plot(bcartFit)
+plot(bartFit)
+
+plot(mcycle, pch=21, cex=.75, bg=8)
+lines(xtest, bartFit$yhat.test.mean, col="darkorange", lwd=2)
+sig <- mean(bartFit$sigma)
+barthi <- apply(bartFit$yhat.test,2,quantile,.95) + 2*sig
+bartlo <- apply(bartFit$yhat.test,2,quantile,.05) - 2*sig
+
+lines(xtest, )
 cah = read.csv("data/CAhousing.csv")
 y = cah["medianHouseValue"][,1]
 X = cah[,1:8]
