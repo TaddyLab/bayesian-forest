@@ -4,17 +4,25 @@ data(mcycle)
 library(tgp)
 
 plot(mcycle, pch=21, cex=.75, bg=8)
-xtest <- seq(0,60,length=400)
-bartFit = bart(mcycle[,1],mcycle[,2],xtest,ntree=100,ndpost=200)
+xtest <- seq(0,60,length=180)
+bartFit = bart(mcycle[,1],mcycle[,2],xtest,ntree=500,ndpost=500)
 bcartFit = bcart(mcycle[,1],mcycle[,2],xtest,tree=c(0.99,.1,2),basemax=1)
 plot(bcartFit)
 plot(bartFit)
 
-plot(mcycle, pch=21, cex=.75, bg=8)
-lines(xtest, bartFit$yhat.test.mean, col="darkorange", lwd=2)
 sig <- mean(bartFit$sigma)
-barthi <- apply(bartFit$yhat.test,2,quantile,.95) + 2*sig
-bartlo <- apply(bartFit$yhat.test,2,quantile,.05) - 2*sig
+barthi <- apply(bartFit$yhat.test,2,quantile,.95) + sig
+bartlo <- apply(bartFit$yhat.test,2,quantile,.05) - sig
+
+pdf("bartmcycle.pdf",width=10,height=3)
+par(mai=c(0,0,0,0))
+plot(mcycle, col=0, bty="n",ylim=range(c(barthi,bartlo)))
+polygon(c(xtest,rev(xtest)), c(bartlo,rev(barthi)), col=rgb(0,0,1,.25), border=NA)
+lines(xtest, bartFit$yhat.test.mean, col=4, lwd=2)
+points(mcycle, pch=20)
+dev.off()
+
+lines(xtest, bartFit$yhat.test.mean, col="darkorange", lwd=2)
 
 lines(xtest, )
 cah = read.csv("data/CAhousing.csv")
